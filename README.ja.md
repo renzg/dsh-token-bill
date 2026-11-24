@@ -6,6 +6,14 @@
 
 ローカルのコスト台帳とセッションログを、読める「Token 明細」に変える [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）バンドルです。会話ページに **明細（账单）** ビューを追加します。
 
+## インストール
+
+```sh
+dsh plugin --profile desktop add github:renzg/dsh-token-bill
+```
+
+web プロファイルでは `desktop` を `web` に。ローカルの `dsh-cost-meter` 台帳とセッションログのみを読み、API キーは不要です。
+
 ## 機能モジュール
 
 ### 上部のピル

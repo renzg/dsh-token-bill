@@ -6,6 +6,14 @@
 
 로컬 비용 원장과 세션 로그를 읽기 쉬운 **Token 명세**로 바꾸는 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)(DSH) 번들입니다. 대화 페이지에 **명세(账单)** 뷰를 추가합니다.
 
+## 설치
+
+```sh
+dsh plugin --profile desktop add github:renzg/dsh-token-bill
+```
+
+웹 프로필에서는 `desktop`을 `web`으로 바꾸세요. 로컬 `dsh-cost-meter` 원장과 세션 로그만 읽으며 API 키가 필요 없습니다.
+
 ## 기능 모듈
 
 ### 상단 필

@@ -6,6 +6,14 @@ Version **0.1.0** (2026-11-24) · package `dsh-token-bill`.
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) bundle that turns the local cost ledger and session logs into a readable token bill. It adds a **Bill (账单)** view to the conversation page.
 
+## Install
+
+```sh
+dsh plugin --profile desktop add github:renzg/dsh-token-bill
+```
+
+Use `--profile web` for a web profile. The bundle reads the local `dsh-cost-meter` ledger and session logs only; no API key is needed.
+
 ## Modules
 
 ### Top pills

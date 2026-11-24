@@ -18,7 +18,8 @@
     "locale/*.json",
     "icon.svg",
     "README*.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "dsh": {
     "bundle": {
@@ -39,5 +40,6 @@
   "homepage": "https://github.com/renzg/dsh-token-bill",
   "bugs": {
     "url": "https://github.com/renzg/dsh-token-bill/issues"
-  }
+  },
+  "license": "MIT"
 }

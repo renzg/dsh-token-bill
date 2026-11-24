@@ -6,6 +6,14 @@
 
 在对话页的视图标签里新增「Token 账单」，把散落在账本与会话日志里的用量整理成一张能读懂的账单。
 
+## 安装
+
+```sh
+dsh plugin --profile desktop add github:renzg/dsh-token-bill
+```
+
+web profile 把 `desktop` 换成 `web`。插件只读本机 `dsh-cost-meter` 账本与会话日志，不需要 API Key。
+
 ## 功能模块
 
 ### 顶部胶囊
