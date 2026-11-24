@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Token bill">
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#0f172a"/>
+  <path d="M16 11h32v40l-4-3-4 3-4-3-4 3-4-3-4 3-4-3-4 3z" fill="#f8fafc"/>
+  <rect x="21" y="17" width="22" height="4" rx="2" fill="#3b82f6"/>
+  <rect x="21" y="25" width="14" height="3" rx="1.5" fill="#94a3b8"/>
+  <rect x="21" y="32" width="7" height="10" rx="2" fill="#14b8a6"/>
+  <rect x="31" y="28" width="7" height="14" rx="2" fill="#3b82f6"/>
+  <rect x="41" y="24" width="7" height="18" rx="2" fill="#f59e0b"/>
+  <circle cx="46" cy="15" r="7" fill="#fbbf24" stroke="#0f172a" stroke-width="2"/>
+  <path d="M43.5 12.5h5M43.5 15.5h5M46 12.5v6" stroke="#0f172a" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+</svg>

@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Token bill",
+    "description": "Adds a Token bill view to the conversation page: total spend and breakdown, month/week/day/hour distribution, task and model rankings, a questioning-style profile with an AI collaboration-fit radar, and cost-cutting suggestions. Reads the local cost ledger and session logs only; nothing is uploaded."
+  }
+}
