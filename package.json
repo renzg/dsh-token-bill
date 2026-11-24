@@ -1,7 +1,7 @@
 {
-  "name": "dsh-token-bill",
+  "name": "@zhiyu.pub/dsh-token-bill",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "Token 账单：本轮会话与汇总账单、协作默契度、动作优化，叠加时间/任务/模型/工具/关联图，全部本机读取。",
   "exports": {
@@ -41,5 +41,8 @@
   "bugs": {
     "url": "https://github.com/renzg/dsh-token-bill/issues"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

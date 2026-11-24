@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: 'dsh-token-bill',
+  id: '@zhiyu.pub/dsh-token-bill',
   factory(require) {
     const React = require('react')
     const h = React.createElement
