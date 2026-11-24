@@ -12,7 +12,7 @@
 dsh plugin --profile desktop add github:renzg/dsh-token-bill
 ```
 
-web プロファイルでは `desktop` を `web` に。ローカルの `dsh-cost-meter` 台帳とセッションログのみを読み、API キーは不要です。
+web プロファイルでは `desktop` を `web` に。npm の `dsh-token-bill` は別プロジェクトなので、上記の GitHub ソースからインストールしてください。ローカルの `dsh-cost-meter` 台帳とセッションログのみを読み、API キーは不要です。
 
 ## 機能モジュール
 

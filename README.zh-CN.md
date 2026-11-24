@@ -12,7 +12,7 @@
 dsh plugin --profile desktop add github:renzg/dsh-token-bill
 ```
 
-web profile 把 `desktop` 换成 `web`。插件只读本机 `dsh-cost-meter` 账本与会话日志，不需要 API Key。
+web profile 把 `desktop` 换成 `web`。npm 上的 `dsh-token-bill` 是另一个项目，请使用上面的 GitHub 源安装。插件只读本机 `dsh-cost-meter` 账本与会话日志，不需要 API Key。
 
 ## 功能模块
 

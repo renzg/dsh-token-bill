@@ -12,7 +12,7 @@
 dsh plugin --profile desktop add github:renzg/dsh-token-bill
 ```
 
-웹 프로필에서는 `desktop`을 `web`으로 바꾸세요. 로컬 `dsh-cost-meter` 원장과 세션 로그만 읽으며 API 키가 필요 없습니다.
+웹 프로필에서는 `desktop`을 `web`으로 바꾸세요. npm의 `dsh-token-bill`은 다른 프로젝트이므로 위 GitHub 소스에서 설치하세요. 로컬 `dsh-cost-meter` 원장과 세션 로그만 읽으며 API 키가 필요 없습니다.
 
 ## 기능 모듈
 
