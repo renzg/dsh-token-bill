@@ -17,7 +17,7 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "README.md",
+    "README*.md",
     "CHANGELOG.md"
   ],
   "dsh": {
@@ -31,5 +31,13 @@
         "@deepseek-ai/dsh-client-ui-conversation"
       ]
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renzg/dsh-token-bill.git"
+  },
+  "homepage": "https://github.com/renzg/dsh-token-bill",
+  "bugs": {
+    "url": "https://github.com/renzg/dsh-token-bill/issues"
   }
 }

@@ -1,34 +1,36 @@
-# Token 账单
+# dsh-token-bill
 
-版本 **0.1.0**（2026-11-24）· 包名 `dsh-token-bill`。
+**English** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-在对话页的视图标签里新增「Token 账单」，把散落在账本与会话日志里的用量整理成一张能读懂的账单。
+Version **0.1.0** (2026-11-24) · package `dsh-token-bill`.
 
-## 看什么
+A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) bundle that turns the local cost ledger and session logs into a readable token bill. It adds a **Bill (账单)** view to the conversation page.
 
-- **顶部四胶囊**：`本轮会话` / `汇总账单` / `协作默契度` / `动作优化`，默认折叠，只显示一行总结；点胶囊或「展开」查看详情，可随时收起。`本轮会话` 展示当前会话的费用、Token 构成/常用工具（胶囊切换）与轮次，费用走势默认折叠；`汇总账单` 放 KPI、一句话结论和消耗成本 Top 3（红/金/蓝标识），明细仍在下方。
-- **时间分布**：月 / 周 / 日 / 时四种粒度。日柱状图带纵轴金额刻度；时视图是「星期 × 小时」热力图。柱子和热力格可悬停看金额，点击可看该时段明细。
-- **任务账单**：按会话归因，卡片 / 表格两种视图。卡片带 Token 构成环、单轮费用、首响中位、工具错误率和常用工具；支持搜索、按费用/Token 排序、按任务类型筛选。表格视图点击行展开完整细节。
-- **工具与执行**：Top 12 工具调用次数、单次中位/P90 耗时、错误率与覆盖任务数。
-- **任务关联图**：只保留可证实的关系——记忆主题、产出文件复用、明确引用、父子会话；同工作区/同日/同类型不再自动连边。没有证据的任务保持孤点。曲线边、力导向布局、悬停聚焦相邻节点、可拖拽、边悬停显示原因。
-- **模型分布**：默认列表，可切「图表」看「渠道 → 模型」的费用占比；列表点击一行看每百万 token 与单次成本。
-- **任务类型**：默认列表，可切「图表」看「类型 → 任务」的费用占比；点击类型可筛选任务。
-- **协作默契度**：六维（目标明确、信息密度、探索倾向、迭代深度、上下文供给、验收意识）+ 四种类型，叠加 AI 的响应风格（准确、及时、主动、解释、记忆、自检），给出默契分、互补/同频判断、逐维落差与双方标签。AI 侧是行为代理指标，不是语义正确率。
-- **动作优化**：错峰、缓存、上下文减重、模型分流、任务聚焦、工具循环等，每条都带数据依据和粗略可省金额；与协作默契度同属顶部模块，用胶囊切换。
+## What you see
 
-## 视觉
+- **Four top pills**: `This session` / `Summary bill` / `Collaboration fit` / `Action tuning`. Collapsed by default with a one-line summary; click a pill or **Expand** to open it, and collapse it again at any time. *This session* shows the current session's cost, token composition / top tools (pill switch), turns, and a collapsed cost timeline. *Summary bill* holds KPIs, a one-line conclusion and the top 3 costliest tasks (red / gold / blue markers); details stay below.
+- **Time distribution**: month / week / day / hour. The daily bar chart has a cost axis and a 3-day trend curve; the hourly view is a weekday × hour heatmap. Bars and heat cells reveal amounts on hover and details on click.
+- **Task bill**: attribution by session, in card or table view. Cards show a token-composition ring, cost per turn, median first response, tool error rate and top tools. Search, sort by cost or tokens, filter by task type; table rows expand full details.
+- **Tools & execution**: top 12 tools by calls, median / P90 duration, error rate and how many tasks used them.
+- **Task relationship graph**: only evidenced links — shared memory topics, reused deliverable files, explicit references, parent/child sessions. Same workspace, same day or same task type no longer creates an edge. Tasks without evidence stay isolated. Curved edges, force layout, neighbour focus on hover, draggable nodes, edge reasons on hover.
+- **Model distribution**: list by default; switch to **Chart** for a channel → model sunburst of cost share. Click a list row for per-million-token and per-call cost.
+- **Task types**: list by default; switch to **Chart** for a type → task sunburst. Click a type to filter tasks.
+- **Collaboration fit**: six axes (goal clarity, information density, exploration, iteration, context supply, verification) and four archetypes, overlaid with the AI's response style (accuracy, latency, proactivity, explanation, memory, self-check). Gives a fit score, complement/same-frequency judgement, per-axis gaps and tags for both sides. AI-side numbers are behavioural proxies, not semantic accuracy.
+- **Action tuning**: off-peak scheduling, cache use, context slimming, model routing, task focus and tool-loop suggestions, each with evidence and a rough saving estimate.
 
-配色取自知语 VI：青蓝 `#2A4A78`、石绿 `#159A99`、月蓝 `#84A5D2`、牙白 `#E8EEF7`、缟 `#F2ECDE`、鎏金 `#F9E87F`、宫墙红 `#9E2B25`。页面用暖纸底、纸白卡面与细青蓝描边，深色主题下自动降低暖色比例，避免整页变成纯科技蓝。图表不用外部库，手绘 SVG/CSS 实现悬停提示、点击选中和筛选。标题用衬线字，按钮配线性图标；胶囊切换、折叠、柱状增长、热力格悬停都有轻量动效，并遵循 `prefers-reduced-motion`。
+## Visual design
 
-## 数据从哪来
+The palette follows the Zhiyu VI: indigo `#2A4A78`, stone green `#159A99`, moon blue `#84A5D2`, ivory `#E8EEF7`, warm paper `#F2ECDE`, gold `#F9E87F`, palace red `#9E2B25`. Warm paper background, paper-white cards and thin indigo rules; in dark mode the warm ratio drops automatically. No external chart library: sunbursts, rings, curves and the graph are hand-drawn SVG/CSS. Serif title, line icons, and light motion for pill switches, collapse, bars and heat cells, respecting `prefers-reduced-motion`.
 
-- 费用与 token：本机 `dsh-cost-meter` 账本（`~/.dsh/storages/cost-meter/ledger.json`）。
-- 小时分布、轮次、工具调用、用户提问：本机会话日志（`~/.dsh/sessions/`）。
-- 不上传任何数据，不发网络请求；账本与会话日志都只在本机读取。关闭插件后视图消失，账本不受影响。
+## Where the data comes from
 
-## 边界
+- Cost and tokens: the local `dsh-cost-meter` ledger at `~/.dsh/storages/cost-meter/ledger.json`.
+- Hourly distribution, turns, tool calls and user prompts: local session logs under `~/.dsh/sessions/`.
+- Nothing is uploaded and no network request is made. Disabling the bundle removes the view; the ledger is untouched.
 
-- 账本只保留安装费用插件之后的记录；更早的日期显示为空。页面会标注账本保留范围。
-- 小时金额是分摊值，不是逐次计费；峰谷权重按费用插件配置估算，合计与每日账本一致。
-- 提问画像需要所选账期内至少有一条用户消息；样本不足时只给可计算的指标。AI 侧指标来自工具结果、轮次完成、首响延迟、工具种类与纠正用语，是行为代理，不等于语义正确率。
-- 建议里的金额是保守粗估，多项建议可能重叠，合计不代表可以叠加。
+## Boundaries
+
+- The ledger only keeps records after the cost plugin was installed; earlier dates are empty. The retained range is shown in the page.
+- Hourly amounts are allocated, not per-call billing; peak/off-peak weights follow the cost plugin's configuration and the total still matches the daily ledger.
+- The style profile needs at least one user message in the selected range. AI-side metrics come from tool results, turn completion, first-response latency, tool variety and correction phrases; they are behavioural proxies, not semantic accuracy.
+- Saving estimates are conservative and may overlap; the sum is not additive.
