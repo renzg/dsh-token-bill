@@ -6,21 +6,40 @@ Version **0.1.0** (2026-11-24) · package `dsh-token-bill`.
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) bundle that turns the local cost ledger and session logs into a readable token bill. It adds a **Bill (账单)** view to the conversation page.
 
-## What you see
+## Modules
 
-- **Four top pills**: `This session` / `Summary bill` / `Collaboration fit` / `Action tuning`. Collapsed by default with a one-line summary; click a pill or **Expand** to open it, and collapse it again at any time. *This session* shows the current session's cost, token composition / top tools (pill switch), turns, and a collapsed cost timeline. *Summary bill* holds KPIs, a one-line conclusion and the top 3 costliest tasks (red / gold / blue markers); details stay below.
-- **Time distribution**: month / week / day / hour. The daily bar chart has a cost axis and a 3-day trend curve; the hourly view is a weekday × hour heatmap. Bars and heat cells reveal amounts on hover and details on click.
-- **Task bill**: attribution by session, in card or table view. Cards show a token-composition ring, cost per turn, median first response, tool error rate and top tools. Search, sort by cost or tokens, filter by task type; table rows expand full details.
-- **Tools & execution**: top 12 tools by calls, median / P90 duration, error rate and how many tasks used them.
-- **Task relationship graph**: only evidenced links — shared memory topics, reused deliverable files, explicit references, parent/child sessions. Same workspace, same day or same task type no longer creates an edge. Tasks without evidence stay isolated. Curved edges, force layout, neighbour focus on hover, draggable nodes, edge reasons on hover.
-- **Model distribution**: list by default; switch to **Chart** for a channel → model sunburst of cost share. Click a list row for per-million-token and per-call cost.
-- **Task types**: list by default; switch to **Chart** for a type → task sunburst. Click a type to filter tasks.
-- **Collaboration fit**: six axes (goal clarity, information density, exploration, iteration, context supply, verification) and four archetypes, overlaid with the AI's response style (accuracy, latency, proactivity, explanation, memory, self-check). Gives a fit score, complement/same-frequency judgement, per-axis gaps and tags for both sides. AI-side numbers are behavioural proxies, not semantic accuracy.
-- **Action tuning**: off-peak scheduling, cache use, context slimming, model routing, task focus and tool-loop suggestions, each with evidence and a rough saving estimate.
+### Top pills
 
-## Visual design
+`This session` / `Summary bill` / `Collaboration fit` / `Action tuning`. Collapsed by default with a one-line summary; click a pill or **Expand** to open it, and collapse it again at any time.
 
-The palette follows the Zhiyu VI: indigo `#2A4A78`, stone green `#159A99`, moon blue `#84A5D2`, ivory `#E8EEF7`, warm paper `#F2ECDE`, gold `#F9E87F`, palace red `#9E2B25`. Warm paper background, paper-white cards and thin indigo rules; in dark mode the warm ratio drops automatically. No external chart library: sunbursts, rings, curves and the graph are hand-drawn SVG/CSS. Serif title, line icons, and light motion for pill switches, collapse, bars and heat cells, respecting `prefers-reduced-motion`.
+- **This session**: current session cost, token composition / top tools (pill switch), turns, and a collapsed cost timeline.
+- **Summary bill**: KPIs, a one-line conclusion and the top 3 costliest tasks (red / gold / blue markers).
+- **Collaboration fit**: dual six-axis radar, tags for both sides, fit score, complement / same-frequency judgement and per-axis gaps.
+- **Action tuning**: off-peak, cache, context, model routing, task focus and tool-loop suggestions, each with evidence and a rough saving estimate.
+
+### Time distribution
+
+Month / week / day / hour. The daily chart has a cost axis and a 3-day trend curve; the hourly view is a weekday × hour heatmap. Hover for amounts, click for details.
+
+### Task bill
+
+Attribution by session, in card or table view. Cards show a token-composition ring, cost per turn, median first response, tool error rate and top tools; search, sort by cost or tokens, filter by task type; table rows expand full details.
+
+### Tools & execution
+
+Top 12 tools by calls, median / P90 duration, error rate and task coverage; click a tool to filter tasks.
+
+### Task relationship graph
+
+Only evidenced links: shared memory topics, reused deliverable files, explicit references, parent/child sessions. Same workspace, same day or same task type alone does not connect; tasks without evidence stay isolated. Curved edges, force layout, neighbour focus on hover, draggable nodes, edge reasons on hover.
+
+### Model distribution
+
+List by default; switch to **Chart** for a channel → model cost sunburst. Click a list row for per-million-token and per-call cost.
+
+### Task types
+
+List by default; switch to **Chart** for a type → task sunburst. Click a type to filter tasks.
 
 ## Where the data comes from
 
