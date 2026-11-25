@@ -223,6 +223,14 @@ window.__ModuleLoader__.load({
       @media (max-width: 640px) { .tb-costtypes { flex-direction: column; align-items: flex-start; } .tb-costtype-list { width: 100%; } }
       .tb-session-head { margin-bottom: 12px; }
       .tb-session-ring { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+      .tb-primary-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--tb-line); }
+      .tb-primary-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+      .tb-primary-tab { display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; border-bottom: 0; background: transparent; color: ${C.secondary}; padding: 9px 15px; border-radius: 10px 10px 0 0; font: inherit; font-size: 13px; cursor: pointer; position: relative; top: 1px; transition: background .18s ease, color .18s ease; }
+      .tb-primary-tab:hover { background: color-mix(in srgb, ${VI.moon} 10%, transparent); color: ${C.primary}; }
+      .tb-primary-tab[aria-selected="true"] { background: var(--tb-card); border-color: var(--tb-line); color: ${C.primary}; box-shadow: inset 0 2px 0 ${VI.teal}; }
+      .tb-module { display: grid; gap: 14px; margin-top: 14px; }
+      .tb-module-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+      .tb-module-meta { font-size: 11.5px; color: ${C.secondary}; }
       .tb-top { padding: 16px 18px; background: linear-gradient(140deg, color-mix(in srgb, ${VI.ivory} 26%, var(--tb-card)), var(--tb-card) 64%); }
       .tb-top-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
       .tb-top-tabs { flex-wrap: wrap; }
@@ -500,7 +508,6 @@ window.__ModuleLoader__.load({
         }
       }, [range.from, range.to, sessionId])
       useEffect(() => {
-        setState({ loading: true, data: null, error: null })
         load(false)
       }, [load])
       return [state, () => load(true)]
@@ -519,22 +526,6 @@ window.__ModuleLoader__.load({
           h('div', { className: 'tb-kpi-l' }, label)),
         h('div', { className: 'tb-kpi-v', style: color ? { color } : undefined }, value),
         h('div', { className: 'tb-kpi-s' }, sub || ''))
-    }
-
-    function Head({ state, period, setPeriod, reload }) {
-      const data = state.data
-      const stamp = data ? new Date(data.generatedAt).toLocaleTimeString('zh-CN', { hour12: false }) : ''
-      const meta = data ? `${data.range.from} 至 ${data.range.to} · 账本保留 ${data.retained.from}–${data.retained.to} · 生成于 ${stamp}` : '正在读取账本…'
-      return h('header', { className: 'tb-head' },
-        h('div', null,
-          h('div', { className: 'tb-title' }, 'Token 账单'),
-          h('div', { className: 'tb-sub' }, meta)),
-        h('div', { className: 'tb-tools' },
-          h('div', { className: 'tb-seg', role: 'group', 'aria-label': '账期' },
-            [['all', '全部'], ['7', '近 7 天'], ['30', '近 30 天'], ['month', '本月']].map(([key, label]) =>
-              h('button', { key, type: 'button', 'aria-pressed': period === key, onClick: () => setPeriod(key) }, label))),
-          h('button', { className: 'tb-btn', type: 'button', onClick: reload, disabled: state.loading },
-            h(Icon, { name: 'refresh', size: 13 }), state.loading ? '读取中…' : '刷新')))
     }
 
     function Summary({ data }) {
@@ -1341,7 +1332,7 @@ window.__ModuleLoader__.load({
     function Loading() {
       return h('div', { className: 'tb-root' }, h('div', { className: 'tb-wrap', 'aria-busy': 'true' },
         h('div', { className: 'tb-head' },
-          h('div', null, h('div', { className: 'tb-title' }, 'Token 账单'), h('div', { className: 'tb-sub' }, '正在读取账本与会话日志…'))),
+          h('div', null, h('div', { className: 'tb-title' }, '账单'), h('div', { className: 'tb-sub' }, '正在读取账本与会话日志…'))),
         h('div', { className: 'tb-kpis' }, Array.from({ length: 5 }, (_, i) => h('div', { key: i, className: 'tb-kpi' },
           h('div', { className: 'tb-skel', style: { width: '48%', marginBottom: 10 } }),
           h('div', { className: 'tb-skel', style: { width: '68%', height: 22 } })))),
@@ -1350,7 +1341,7 @@ window.__ModuleLoader__.load({
 
     function ErrorCard({ message, retry }) {
       return h('div', { className: 'tb-root' }, h('div', { className: 'tb-wrap' },
-        h('div', { className: 'tb-head' }, h('div', null, h('div', { className: 'tb-title' }, 'Token 账单'), h('div', { className: 'tb-sub' }, '读取失败'))),
+        h('div', { className: 'tb-head' }, h('div', null, h('div', { className: 'tb-title' }, '账单'), h('div', { className: 'tb-sub' }, '读取失败'))),
         h('div', { className: 'tb-card tb-empty' },
           h('div', null, message || '未知错误'),
           h('div', { style: { marginTop: 12 } }, h('button', { type: 'button', className: 'tb-btn', onClick: retry }, '重试')))))
@@ -1455,38 +1446,59 @@ window.__ModuleLoader__.load({
             h('div', { className: 'tb-collapse-inner' }, h(SessionTimeline, { session, data })))))
     }
 
-    function TopPanel({ data }) {
-      const [tab, setTab] = useState('session')
-      const [open, setOpen] = useState(false)
-      const match = data.style && data.style.match
-      const summary = data.totals.cost > 0
-        ? `本账期 ${money(data.totals.cost, data.symbol)} · ${data.totals.calls.toLocaleString('zh-CN')} 次调用 · ${data.totals.sessions} 个会话 · 协作 ${match ? `${match.score}/100` : '—'} · ${(data.suggestions || []).length} 条动作`
-        : '该账期暂无记录'
-      const tabs = [['session', '本轮会话', 'clock'], ['total', '汇总账单', 'receipt'], ['rapport', '协作默契度', 'radar'], ['actions', '动作优化', 'sparkles']]
-      const content = tab === 'session'
-        ? h(SessionBill, { data })
-        : tab === 'total'
-          ? h(Summary, { data })
-          : tab === 'rapport'
-            ? h(StyleSection, { data })
-            : h(Suggestions, { data })
-      return h('section', { className: 'tb-card tb-top' },
-        h('div', { className: 'tb-top-head' },
-          h('div', { className: 'tb-seg tb-top-tabs', role: 'group', 'aria-label': '账单模块' },
-            tabs.map(([key, label, icon]) => h('button', {
-              key, type: 'button', 'aria-pressed': tab === key,
-              onClick: () => { setTab(key); setOpen(true) },
-            }, h(Icon, { name: icon, size: 13 }), label))),
-          h('button', { className: 'tb-btn', type: 'button', 'aria-expanded': open, onClick: () => setOpen(value => !value) },
-            h(Icon, { name: open ? 'chevronUp' : 'chevronDown', size: 13 }), open ? '收起' : '展开')),
-        h('div', { className: `tb-collapse${open ? ' tb-collapse-open' : ''}`, 'aria-hidden': !open },
-          h('div', { className: 'tb-collapse-inner' },
-            h('div', { key: tab, className: 'tb-tabpanel' }, h('div', { className: 'tb-embedded' }, content)))),
-        !open ? h('div', { className: 'tb-top-summary' }, summary) : null)
+    function PeriodBar({ period, onChange }) {
+      return h('div', { className: 'tb-seg', role: 'group', 'aria-label': '账期' },
+        [['all', '全部'], ['7', '近 7 天'], ['30', '近 30 天'], ['month', '本月']].map(([key, label]) =>
+          h('button', { key, type: 'button', 'aria-pressed': period === key, onClick: () => onChange(key) }, label)))
+    }
+
+    function ModuleBar({ meta, period, onChange }) {
+      return h('div', { className: 'tb-module-head' },
+        h('div', { className: 'tb-module-meta' }, meta || ''),
+        h(PeriodBar, { period, onChange }))
+    }
+
+    function PrimaryTabs({ tab, onTab, reload, loading }) {
+      return h('div', { className: 'tb-primary-head' },
+        h('nav', { className: 'tb-primary-tabs', role: 'tablist', 'aria-label': '账单模块' },
+          [['session', '本轮会话', 'clock'], ['total', '汇总账单', 'receipt'], ['rapport', '协作默契度', 'radar'], ['actions', '动作优化', 'sparkles']].map(([key, label, icon]) =>
+            h('button', {
+              key, type: 'button', role: 'tab', className: 'tb-primary-tab', 'aria-selected': tab === key,
+              onClick: () => onTab(key),
+            }, h(Icon, { name: icon, size: 14 }), label))),
+        h('button', { className: 'tb-btn', type: 'button', onClick: reload, disabled: loading, style: { marginBottom: 8 } },
+          h(Icon, { name: 'refresh', size: 13 }), loading ? '读取中…' : '刷新'))
+    }
+
+    function TotalModule({ data, period, onPeriod, domain, onDomain, tool, onTool }) {
+      return h('div', { className: 'tb-module' },
+        h(ModuleBar, { meta: `${data.range.from} 至 ${data.range.to} · 账本保留 ${data.retained.from}–${data.retained.to}`, period, onChange: onPeriod }),
+        h(Summary, { data }),
+        h(TimeSection, { data }),
+        h('div', { className: 'tb-grid2' },
+          h(Models, { data }),
+          h(Domains, { data, active: domain, onSelect: onDomain })),
+        h(Tasks, { data, domain, onDomain, tool, onTool }),
+        h(Tools, { data, active: tool, onSelect: onTool }),
+        h(Relations, { data }),
+        h(Notes, { data }))
+    }
+
+    function RapportModule({ data, period, onPeriod }) {
+      return h('div', { className: 'tb-module' },
+        h(ModuleBar, { meta: '按所选账期计算', period, onChange: onPeriod }),
+        h(StyleSection, { data }))
+    }
+
+    function ActionsModule({ data, period, onPeriod }) {
+      return h('div', { className: 'tb-module' },
+        h(ModuleBar, { meta: '按所选账期计算', period, onChange: onPeriod }),
+        h(Suggestions, { data }))
     }
 
     function TokenBillView(props) {
       const sessionId = props?.sessionId || ''
+      const [tab, setTab] = useState('session')
       const [period, setPeriod] = useState('all')
       const [domain, setDomain] = useState('')
       const [toolFilter, setToolFilter] = useState('')
@@ -1497,20 +1509,20 @@ window.__ModuleLoader__.load({
       if (!data && state.error) return h(React.Fragment, null, h('style', null, CSS), h(ErrorCard, { message: state.error, retry: reload }))
       if (!data) return h(React.Fragment, null, h('style', null, CSS), h(ErrorCard, { message: '没有收到账单数据。', retry: reload }))
 
+      const content = tab === 'session'
+        ? h(SessionBill, { data })
+        : tab === 'total'
+          ? h(TotalModule, { data, period, onPeriod: changePeriod, domain, onDomain: setDomain, tool: toolFilter, onTool: setToolFilter })
+          : tab === 'rapport'
+            ? h(RapportModule, { data, period, onPeriod: changePeriod })
+            : h(ActionsModule, { data, period, onPeriod: changePeriod })
+
       return h('div', { className: 'tb-root' },
         h('style', null, CSS),
         h('div', { className: 'tb-wrap' },
-          h(Head, { state, period, setPeriod: changePeriod, reload }),
+          h(PrimaryTabs, { tab, onTab: setTab, reload, loading: state.loading }),
           state.error ? h('div', { className: 'tb-note', role: 'alert', style: { color: C.error } }, `刷新失败，显示上次结果：${state.error}`) : null,
-          h(TopPanel, { data }),
-          h(TimeSection, { data }),
-          h('div', { className: 'tb-grid2' },
-            h(Models, { data }),
-            h(Domains, { data, active: domain, onSelect: setDomain })),
-          h(Tasks, { data, domain, onDomain: setDomain, tool: toolFilter, onTool: setToolFilter }),
-          h(Tools, { data, active: toolFilter, onSelect: setToolFilter }),
-          h(Relations, { data }),
-          h(Notes, { data })))
+          content))
     }
 
     return {

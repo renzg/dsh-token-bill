@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Version **0.1.1** (2026-11-25) · package `@zhiyu.pub/dsh-token-bill`.
+Version **0.1.2** (2026-11-25) · package `@zhiyu.pub/dsh-token-bill`.
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) bundle that turns the local cost ledger and session logs into a readable token bill. It adds a **Bill (账单)** view to the conversation page.
 
@@ -32,12 +32,12 @@ Sample data only — not a real ledger or session. Screenshots show the Chinese 
 
 ## Modules
 
-### Top pills
+### Top tabs
 
-`This session` / `Summary bill` / `Collaboration fit` / `Action tuning`. Collapsed by default with a one-line summary; click a pill or **Expand** to open it, and collapse it again at any time.
+Four first-level tabs replace the page title: `This session` / `Summary bill` / `Collaboration fit` / `Action tuning`. Each is an independent module. The period switch (All / 7 days / 30 days / This month) sits inside Summary bill, Collaboration fit and Action tuning.
 
-- **This session**: current session cost, cost-type composition (donut + category breakdown), turns, and a collapsed cost timeline.
-- **Summary bill**: KPIs, a one-line conclusion and the top 3 costliest tasks (red / gold / blue markers).
+- **This session**: current session cost, cost-type composition (donut + category breakdown), turns, and a collapsed cost timeline. Session-specific, so it has no period switch.
+- **Summary bill**: KPIs, a one-line conclusion, the top 3 costliest tasks (red / gold / blue markers), and the detail sections below (time, task bill, tools, graph, models, task types).
 - **Collaboration fit**: dual six-axis radar, tags for both sides, fit score, complement / same-frequency judgement and per-axis gaps.
 - **Action tuning**: off-peak, cache, context, model routing, task focus and tool-loop suggestions, each with evidence and a rough saving estimate.
 

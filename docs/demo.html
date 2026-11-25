@@ -8,6 +8,11 @@
   * { box-sizing: border-box; }
   body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; font-size:13.5px; line-height:1.55; }
   #shot { width:1180px; padding:26px 30px 34px; background:var(--paper); }
+  .primary-head { display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid var(--line); margin-bottom:14px; }
+  .primary-tabs { display:flex; gap:4px; flex-wrap:wrap; }
+  .primary-tools { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .module-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:2px 0 12px; }
+  .module-meta { font-size:11.5px; color:var(--muted); }
   .head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:18px; }
   .title { font-family:"Songti SC","STSong","Noto Serif SC",serif; font-size:26px; font-weight:600; letter-spacing:.08em; display:inline-block; padding-bottom:2px; border-bottom:2px solid rgba(21,154,153,.32); }
   .sub { color:var(--muted); font-size:12px; margin-top:5px; }
@@ -19,9 +24,9 @@
   .btn { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:6px 12px; border-radius:8px; font:inherit; font-size:12px; }
   .top { background:linear-gradient(140deg,#f8f4eb,#FFFDF6 64%); border:1px solid var(--line); border-radius:16px; padding:16px 18px; box-shadow:0 8px 30px rgba(42,74,120,.06); }
   .top-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
-  .pills { display:flex; gap:2px; background:rgba(255,253,246,.72); border:1px solid var(--line); border-radius:9px; padding:3px; }
-  .pill { display:inline-flex; align-items:center; gap:5px; border:0; background:transparent; color:var(--muted); font:inherit; font-size:12px; padding:6px 11px; border-radius:6px; }
-  .pill.on { background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(42,74,120,.13); }
+  .pills { display:flex; gap:4px; flex-wrap:wrap; }
+  .pill { display:inline-flex; align-items:center; gap:6px; border:1px solid transparent; border-bottom:0; background:transparent; color:var(--muted); font:inherit; font-size:13px; padding:9px 15px; border-radius:10px 10px 0 0; position:relative; top:1px; }
+  .pill.on { background:var(--card); border-color:var(--line); color:var(--ink); box-shadow:inset 0 2px 0 var(--teal); }
   .kpis { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
   .kpi { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:15px 16px; box-shadow:0 1px 2px rgba(42,74,120,.04); }
   .kpi-head { display:flex; align-items:center; gap:7px; margin-bottom:2px; }
@@ -72,23 +77,11 @@
 </head>
 <body>
 <div id="shot">
-  <div class="head">
-    <div>
-      <div class="title">Token 账单<span class="badge">DEMO · 示例数据</span></div>
-      <div class="sub">2026-10-01 至 2026-10-12 · 账本保留 2026-10-01–2026-10-12 · 生成于 09:12:08</div>
-    </div>
-    <div class="tools">
-      <div class="seg"><button class="on">全部</button><button>近 7 天</button><button>近 30 天</button><button>本月</button></div>
-      <button class="btn">↻ 刷新</button>
-    </div>
+  <div class="primary-head">
+    <div class="primary-tabs" id="pills"></div>
+    <div class="primary-tools"><span class="badge">DEMO · 示例数据</span><button class="btn">↻ 刷新</button></div>
   </div>
-  <div class="top">
-    <div class="top-head">
-      <div class="pills" id="pills"></div>
-      <button class="btn">⌃ 收起</button>
-    </div>
-    <div id="panel"></div>
-  </div>
+  <div id="panel"></div>
   <div class="note">示例数据，仅用于界面演示；不代表任何真实账本或会话。</div>
 </div>
 <script>
@@ -171,7 +164,8 @@ const actions = [
   ['high','先优化最贵的三个任务','前三个任务占了可归因费用的 51%，它们的写法决定了大部分账单。','优先给这类任务建立模板：固定输入、固定验收标准、固定停止条件。','结构性优化','任务集中度'],
 ];
 const actionsHTML = `<div class="suggestions">${actions.map(([p,t,w,a,s,b])=>`<div class="sug"><div class="sug-head"><span class="dot" style="background:${p==='high'?'#B55245':'#D9A441'}"></span><span class="sug-title">${t}</span><span class="sug-save">${s}</span></div><div class="sug-why">${w}</div><div class="sug-act">${a}</div><div class="sug-basis">${b}</div></div>`).join('')}</div>`;
-document.getElementById('panel').innerHTML = tab==='rapport'?rapport:tab==='actions'?actionsHTML:summary;
+const moduleBar = `<div class="module-head"><div class="module-meta">2026-10-01 至 2026-10-12 · 账本保留 2026-10-01–2026-10-12</div><div class="seg"><button class="on">全部</button><button>近 7 天</button><button>近 30 天</button><button>本月</button></div></div>`;
+document.getElementById('panel').innerHTML = moduleBar + (tab==='rapport'?`<div class="card" style="padding:18px 20px">${rapport}</div>`:tab==='actions'?actionsHTML:summary);
 document.querySelectorAll('.pill').forEach(el=>el.addEventListener('click',()=>{location.search='?tab='+el.dataset.tab}));
 </script>
 </body>
