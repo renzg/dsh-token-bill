@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | **한국어**
 
-버전 **0.1.3** (2026-11-25) · 패키지 `@zhiyu.pub/dsh-token-bill`.
+버전 **0.1.4** (2026-11-25) · 패키지 `@zhiyu.pub/dsh-token-bill`.
 
 로컬 비용 원장과 세션 로그를 읽기 쉬운 **Token 명세**로 바꾸는 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)(DSH) 번들입니다. 대화 페이지에 **명세(账单)** 뷰를 추가합니다.
 
@@ -13,6 +13,17 @@ dsh plugin --profile desktop add @zhiyu.pub/dsh-token-bill
 ```
 
 웹 프로필에서는 `desktop`을 `web`으로 바꾸세요. 소스에서는 `dsh plugin --profile desktop add github:renzg/dsh-token-bill`로 설치할 수 있습니다. 로컬 `dsh-cost-meter` 원장과 세션 로그만 읽으며 API 키가 필요 없습니다.
+
+## 보고서 내보내기
+
+새로고침 옆의 **보고서 생성**에서 형식을 선택합니다:
+
+- **HTML** — 단일 파일 시각화 보고서
+- **PDF** — 인쇄용 시각화 보고서(로컬 Chrome/Edge로 렌더링)
+- **DOCX** — 표와 컬러 막대가 있는 Word 보고서
+- **JSON** — 원본 보고서 데이터
+
+모든 형식은 로컬에서 생성되며 외부로 전송되지 않습니다.
 
 ## 데모
 

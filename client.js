@@ -232,6 +232,15 @@ window.__ModuleLoader__.load({
       .tb-primary-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
       .tb-primary-tab { display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; border-bottom: 0; background: transparent; color: ${C.secondary}; padding: 9px 15px; border-radius: 10px 10px 0 0; font: inherit; font-size: 13px; cursor: pointer; position: relative; top: 1px; transition: background .18s ease, color .18s ease; }
       .tb-primary-tab:hover { background: color-mix(in srgb, ${VI.moon} 10%, transparent); color: ${C.primary}; }
+      .tb-primary-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .tb-report { position: relative; }
+      .tb-report-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; width: 210px; padding: 5px; background: var(--tb-card); border: 1px solid var(--tb-line); border-radius: 10px; box-shadow: 0 14px 38px rgba(42,74,120,.16); }
+      .tb-report-item { display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 9px; border: 0; border-radius: 7px; background: transparent; color: ${C.primary}; font: inherit; text-align: left; cursor: pointer; }
+      .tb-report-item:hover { background: color-mix(in srgb, ${VI.moon} 13%, transparent); }
+      .tb-report-item > span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+      .tb-report-item strong { font-size: 12px; font-weight: 600; }
+      .tb-report-item small { font-size: 10px; color: ${C.secondary}; }
+      .tb-report-error { position: absolute; right: 0; top: calc(100% + 6px); z-index: 41; max-width: 260px; padding: 6px 9px; border: 1px solid ${C.error}; border-radius: 8px; background: var(--tb-card); color: ${C.error}; font-size: 10.5px; box-shadow: 0 8px 24px rgba(42,74,120,.12); }
       .tb-primary-tab[aria-selected="true"] { background: var(--tb-card); border-color: var(--tb-line); color: ${C.primary}; box-shadow: inset 0 2px 0 ${VI.teal}; }
       .tb-module { display: grid; gap: 14px; margin-top: 14px; }
       .tb-module-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -349,6 +358,8 @@ window.__ModuleLoader__.load({
       link: ['M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1', 'M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1'],
       target: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12z', 'M12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z'],
       activity: ['M3 12h4l2.5-7 5 14 2.5-7h4'],
+      download: ['M12 3v12', 'M7 10l5 5 5-5', 'M5 21h14'],
+      fileText: ['M6 2h8l4 4v16H6z', 'M14 2v4h4', 'M9 12h6', 'M9 16h6'],
     }
 
     function Icon({ name, size = 14 }) {
@@ -1549,7 +1560,74 @@ window.__ModuleLoader__.load({
         h(PeriodBar, { period, onChange }))
     }
 
-    function PrimaryTabs({ tab, onTab, reload, loading }) {
+    function ReportButton({ data, sessionId }) {
+      const [open, setOpen] = useState(false)
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const ref = useRef(null)
+      useEffect(() => {
+        if (!open) return undefined
+        const close = event => { if (!ref.current?.contains(event.target)) setOpen(false) }
+        document.addEventListener('pointerdown', close)
+        return () => document.removeEventListener('pointerdown', close)
+      }, [open])
+      const download = async format => {
+        setOpen(false)
+        setBusy(true)
+        setError('')
+        try {
+          const params = new URLSearchParams({
+            format,
+            from: data.range?.from || '',
+            to: data.range?.to || '',
+            currency: data.currency || 'CNY',
+            sessionId: sessionId || '',
+          })
+          const response = await fetch(`/token-bill/report/export?${params.toString()}`)
+          if (!response.ok) {
+            let message = `HTTP ${response.status}`
+            try { const body = await response.json(); if (body?.error) message = body.error } catch {}
+            throw new Error(message)
+          }
+          const blob = await response.blob()
+          const disposition = response.headers.get('content-disposition') || ''
+          const match = /filename="([^"]+)"/.exec(disposition)
+          const name = match?.[1] || `token-bill.${format}`
+          const href = URL.createObjectURL(blob)
+          const anchor = document.createElement('a')
+          anchor.href = href
+          anchor.download = name
+          document.body.appendChild(anchor)
+          anchor.click()
+          anchor.remove()
+          setTimeout(() => URL.revokeObjectURL(href), 1000)
+        } catch (reason) {
+          setError(reason?.message || '报告生成失败')
+        } finally {
+          setBusy(false)
+        }
+      }
+      const items = [
+        ['html', 'HTML', '可视化网页报告'],
+        ['pdf', 'PDF', '适合打印/分享'],
+        ['docx', 'DOCX', 'Word 文档报告'],
+        ['json', 'JSON', '原始账单数据'],
+      ]
+      return h('div', { className: 'tb-report', ref },
+        h('button', {
+          className: 'tb-btn', type: 'button', 'aria-haspopup': 'menu', 'aria-expanded': open,
+          disabled: busy, onClick: () => setOpen(value => !value),
+        }, h(Icon, { name: 'download', size: 13 }), busy ? '生成中…' : '生成报告', h(Icon, { name: 'chevronDown', size: 12 })),
+        open ? h('div', { className: 'tb-report-menu', role: 'menu' },
+          items.map(([format, label, hint]) => h('button', {
+            key: format, type: 'button', className: 'tb-report-item', role: 'menuitem',
+            onClick: () => download(format),
+          }, h(Icon, { name: 'fileText', size: 14 }), h('span', null,
+            h('strong', null, label), h('small', null, hint))))) : null,
+        error ? h('div', { className: 'tb-report-error', role: 'alert' }, error) : null)
+    }
+
+    function PrimaryTabs({ tab, onTab, reload, loading, data, sessionId }) {
       return h('div', { className: 'tb-primary-head' },
         h('nav', { className: 'tb-primary-tabs', role: 'tablist', 'aria-label': '账单模块' },
           [['session', '本轮会话', 'clock'], ['total', '汇总账单', 'receipt'], ['rapport', '协作默契度', 'radar'], ['actions', '动作优化', 'sparkles']].map(([key, label, icon]) =>
@@ -1557,8 +1635,10 @@ window.__ModuleLoader__.load({
               key, type: 'button', role: 'tab', className: 'tb-primary-tab', 'aria-selected': tab === key,
               onClick: () => onTab(key),
             }, h(Icon, { name: icon, size: 14 }), label))),
-        h('button', { className: 'tb-btn', type: 'button', onClick: reload, disabled: loading, style: { marginBottom: 8 } },
-          h(Icon, { name: 'refresh', size: 13 }), loading ? '读取中…' : '刷新'))
+        h('div', { className: 'tb-primary-tools' },
+          h(ReportButton, { data, sessionId }),
+          h('button', { className: 'tb-btn', type: 'button', onClick: reload, disabled: loading },
+            h(Icon, { name: 'refresh', size: 13 }), loading ? '读取中…' : '刷新')))
     }
 
     function TotalModule({ data, period, onPeriod, domain, onDomain, tool, onTool }) {
@@ -1611,7 +1691,7 @@ window.__ModuleLoader__.load({
       return h('div', { className: 'tb-root' },
         h('style', null, CSS),
         h('div', { className: 'tb-wrap' },
-          h(PrimaryTabs, { tab, onTab: setTab, reload, loading: state.loading }),
+          h(PrimaryTabs, { tab, onTab: setTab, reload, loading: state.loading, data, sessionId }),
           state.error ? h('div', { className: 'tb-note', role: 'alert', style: { color: C.error } }, `刷新失败，显示上次结果：${state.error}`) : null,
           content))
     }

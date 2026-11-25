@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文** | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-版本 **0.1.3**（2026-11-25）· 包名 `@zhiyu.pub/dsh-token-bill`。
+版本 **0.1.4**（2026-11-25）· 包名 `@zhiyu.pub/dsh-token-bill`。
 
 在对话页的视图标签里新增「Token 账单」，把散落在账本与会话日志里的用量整理成一张能读懂的账单。
 
@@ -13,6 +13,17 @@ dsh plugin --profile desktop add @zhiyu.pub/dsh-token-bill
 ```
 
 web profile 把 `desktop` 换成 `web`。也可以从源码安装：`dsh plugin --profile desktop add github:renzg/dsh-token-bill`。插件只读本机 `dsh-cost-meter` 账本与会话日志，不需要 API Key。
+
+## 报告导出
+
+刷新按钮旁边的「生成报告」可以选格式：
+
+- **HTML** — 单文件可视化网页报告
+- **PDF** — 可直接打印/分享的可视化报告（调用本机 Chrome/Edge 渲染）
+- **DOCX** — 带表格和彩色柱条的 Word 报告
+- **JSON** — 原始账单数据
+
+所有格式都在本机生成，不上传任何数据。
 
 ## 演示
 

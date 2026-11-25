@@ -1,4 +1,5 @@
 import { buildReport, invalidateReport } from './lib/report.js'
+import { exportReport } from './lib/export.js'
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -53,4 +54,44 @@ export function apply(ctx) {
       }
     },
   }), 'token-bill: /token-bill/report')
+
+  ctx.effect(() => ctx.webServer.register({
+    kind: 'exact',
+    path: '/token-bill/report/export',
+    handler: async (req, res) => {
+      try {
+        if (req.method !== 'GET') return send(res, 405, { error: '只支持 GET' })
+        const allowed = origin()
+        const requestOrigin = req.headers.origin
+        if (allowed && requestOrigin && requestOrigin !== allowed) return send(res, 403, { error: '只接受本机同源请求' })
+        const site = req.headers['sec-fetch-site']
+        if (site && site !== 'same-origin' && site !== 'none') return send(res, 403, { error: '只接受本机同源请求' })
+
+        const url = new URL(req.url, 'http://127.0.0.1')
+        const format = String(url.searchParams.get('format') || '').toLowerCase()
+        if (!['html', 'pdf', 'docx', 'json'].includes(format)) return send(res, 400, { error: 'format 需要 html/pdf/docx/json' })
+        const from = url.searchParams.get('from') || ''
+        const to = url.searchParams.get('to') || ''
+        const currency = (url.searchParams.get('currency') || 'CNY').toUpperCase()
+        const sessionId = (url.searchParams.get('sessionId') || '').slice(0, 512)
+        if (from && !DATE.test(from)) return send(res, 400, { error: 'from 需要 YYYY-MM-DD' })
+        if (to && !DATE.test(to)) return send(res, 400, { error: 'to 需要 YYYY-MM-DD' })
+        if (from && to && from > to) return send(res, 400, { error: 'from 不能晚于 to' })
+        if (!['CNY', 'USD', 'EUR'].includes(currency)) return send(res, 400, { error: 'currency 需要 CNY/USD/EUR' })
+
+        const report = buildReport({ from, to, currency, sessionId })
+        const file = await exportReport(format, report)
+        res.statusCode = 200
+        res.setHeader('content-type', file.type)
+        res.setHeader('content-disposition', `attachment; filename="${file.name}"`)
+        res.setHeader('content-length', file.body.length)
+        res.setHeader('cache-control', 'no-store')
+        res.setHeader('x-content-type-options', 'nosniff')
+        res.end(file.body)
+      } catch (error) {
+        if (!res.headersSent) send(res, 500, { error: error?.message || String(error) })
+        else res.destroy(error)
+      }
+    },
+  }), 'token-bill: /token-bill/report/export')
 }

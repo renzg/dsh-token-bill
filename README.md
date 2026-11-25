@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Version **0.1.3** (2026-11-25) · package `@zhiyu.pub/dsh-token-bill`.
+Version **0.1.4** (2026-11-25) · package `@zhiyu.pub/dsh-token-bill`.
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) bundle that turns the local cost ledger and session logs into a readable token bill. It adds a **Bill (账单)** view to the conversation page.
 
@@ -13,6 +13,17 @@ dsh plugin --profile desktop add @zhiyu.pub/dsh-token-bill
 ```
 
 Use `--profile web` for a web profile. Install from source instead with `dsh plugin --profile desktop add github:renzg/dsh-token-bill`. The bundle reads the local `dsh-cost-meter` ledger and session logs only; no API key is needed.
+
+## Reports
+
+Next to **Refresh**, **Generate report** opens a format menu:
+
+- **HTML** — one self-contained visual report page
+- **PDF** — print-ready visual report (uses local Chrome/Edge as the renderer)
+- **DOCX** — formatted Word report with tables and colored bars
+- **JSON** — the raw report data
+
+All formats are generated locally from the current ledger and session logs; nothing is uploaded.
 
 ## Demo
 
