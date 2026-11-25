@@ -258,8 +258,11 @@ window.__ModuleLoader__.load({
       .tb-report-error { position: absolute; right: 0; top: calc(100% + 6px); z-index: 41; max-width: 260px; padding: 6px 9px; border: 1px solid ${C.error}; border-radius: 8px; background: var(--tb-card); color: ${C.error}; font-size: 10.5px; box-shadow: 0 8px 24px rgba(42,74,120,.12); }
       .tb-primary-tab[aria-selected="true"] { background: var(--tb-card); border-color: var(--tb-line); color: ${C.primary}; box-shadow: inset 0 2px 0 ${VI.teal}; }
       .tb-module { display: grid; gap: 14px; margin-top: 14px; }
-      .tb-module-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+      .tb-module-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+      .tb-module-heading { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+      .tb-module-title { font-family: "Songti SC", "STSong", "Noto Serif SC", serif; font-size: 20px; font-weight: 600; letter-spacing: .06em; color: ${C.primary}; }
       .tb-module-meta { font-size: 11.5px; color: ${C.secondary}; }
+      .tb-module-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-left: auto; padding-top: 2px; }
       .tb-top { padding: 16px 18px; background: linear-gradient(140deg, color-mix(in srgb, ${VI.ivory} 26%, var(--tb-card)), var(--tb-card) 64%); }
       .tb-top-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
       .tb-top-tabs { flex-wrap: wrap; }
@@ -1160,7 +1163,7 @@ window.__ModuleLoader__.load({
         setPositions(prev => ({ ...prev, [id]: { x: Math.max(30, Math.min(layout.width - 30, x)), y: Math.max(24, Math.min(layout.height - 24, y)) } }))
       }
 
-      return h(Card, { title: '任务关联图', sub: relations.note },
+      return h(Card, { title: '任务关联度', sub: relations.note },
         relations.topics.length ? h('div', { className: 'tb-tags' },
           relations.topics.map(topic => h('span', { key: topic.id, className: 'tb-tag a' }, `${topic.label} · ${topic.count}`))) : null,
         h('svg', {
@@ -1435,10 +1438,14 @@ window.__ModuleLoader__.load({
           h('button', { key, type: 'button', 'aria-pressed': period === key, onClick: () => onChange(key) }, label)))
     }
 
-    function ModuleBar({ meta, period, onChange }) {
+    function ModuleBar({ title, meta, period, onChange, children }) {
       return h('div', { className: 'tb-module-head' },
-        h('div', { className: 'tb-module-meta' }, meta || ''),
-        h(PeriodBar, { period, onChange }))
+        h('div', { className: 'tb-module-heading' },
+          title ? h('div', { className: 'tb-module-title' }, title) : null,
+          meta ? h('div', { className: 'tb-module-meta' }, meta) : null),
+        h('div', { className: 'tb-module-controls' },
+          children,
+          period ? h(PeriodBar, { period, onChange }) : null))
     }
 
     function Switch({ items, value, onChange, accent = VI.teal }) {
@@ -1618,12 +1625,10 @@ window.__ModuleLoader__.load({
       const session = data.session
       if (!session) return h('div', { className: 'tb-empty' }, '本轮会话还没有计费记录。')
       return h('div', { className: 'tb-session' },
-        h('div', { className: 'tb-session-head' },
-          h('div', null,
-            h('div', { className: 'tb-card-t' }, '账单明细'),
-            h('div', { className: 'tb-card-s' }, `${session.title || '当前会话'} · ${session.date || ''} · ${session.domainLabel || ''} · ${session.turns || '—'} 轮 · ${(session.models || []).join('、') || '—'}`))),
-        h('div', { className: 'tb-module-switch' },
-          h(Switch, { items: [['overview', '概览'], ['detail', '明细']], value: view, onChange: setView, accent: VI.teal })),
+        h(ModuleBar, {
+          title: view === 'overview' ? '概览' : '明细',
+          meta: `${session.title || '当前会话'} · ${session.date || ''} · ${session.domainLabel || ''} · ${session.turns || '—'} 轮 · ${(session.models || []).join('、') || '—'}`,
+        }, h(Switch, { items: [['overview', '概览'], ['detail', '明细']], value: view, onChange: setView, accent: VI.teal })),
         view === 'overview'
           ? h(React.Fragment, null,
             h(SessionOverview, { session, data }),
@@ -1722,10 +1727,14 @@ window.__ModuleLoader__.load({
 
     function TotalModule({ data, period, onPeriod, domain, onDomain, tool, onTool }) {
       const [view, setView] = useState('overview')
+      const title = view === 'overview' ? '概览' : view === 'detail' ? '明细' : '任务关联度'
       return h('div', { className: 'tb-module' },
-        h(ModuleBar, { meta: `${data.range.from} 至 ${data.range.to} · 账本保留 ${data.retained.from}–${data.retained.to}`, period, onChange: onPeriod }),
-        h('div', { className: 'tb-module-switch' },
-          h(Switch, { items: [['overview', '概览'], ['detail', '明细'], ['relations', '任务关联']], value: view, onChange: setView, accent: VI.navy })),
+        h(ModuleBar, {
+          title,
+          meta: `${data.range.from} 至 ${data.range.to} · 账本保留 ${data.retained.from}–${data.retained.to}`,
+          period,
+          onChange: onPeriod,
+        }, h(Switch, { items: [['overview', '概览'], ['detail', '明细'], ['relations', '任务关联度']], value: view, onChange: setView, accent: VI.navy })),
         view === 'overview'
           ? h(Summary, { data })
           : view === 'detail'
@@ -1742,13 +1751,13 @@ window.__ModuleLoader__.load({
 
     function RapportModule({ data, period, onPeriod }) {
       return h('div', { className: 'tb-module' },
-        h(ModuleBar, { meta: '按所选账期计算', period, onChange: onPeriod }),
+        h(ModuleBar, { title: '协作默契度', meta: '按所选账期计算', period, onChange: onPeriod }),
         h(StyleSection, { data }))
     }
 
     function ActionsModule({ data, period, onPeriod }) {
       return h('div', { className: 'tb-module' },
-        h(ModuleBar, { meta: '按所选账期计算', period, onChange: onPeriod }),
+        h(ModuleBar, { title: '动作优化', meta: '按所选账期计算', period, onChange: onPeriod }),
         h(Suggestions, { data }))
     }
 

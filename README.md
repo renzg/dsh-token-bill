@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Version **0.1.6** (2026-11-25) · package `@zhiyu.pub/dsh-token-bill`.
+Version **0.1.7** (2026-11-25) · package `@zhiyu.pub/dsh-token-bill`.
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) bundle that turns the local cost ledger and session logs into a readable token bill. It adds a **Bill (账单)** view to the conversation page.
 
@@ -45,7 +45,7 @@ Sample data only — not a real ledger or session. Screenshots show the Chinese 
 
 ### Top tabs
 
-Four first-level tabs replace the page title: `This session` / `Summary bill` / `Collaboration fit` / `Action tuning`. Each is an independent module. The period switch (All / 7 days / 30 days / This month) sits inside Summary bill, Collaboration fit and Action tuning.
+Four first-level tabs replace the page title: `This session` / `Summary bill` / `Collaboration fit` / `Action tuning`. Each is an independent module. The module title shows the active sub-view; the switch and period controls sit on the right. The period switch (All / 7 days / 30 days / This month) sits inside Summary bill, Collaboration fit and Action tuning.
 
 - **This session**: current session cost, cost-type composition (share / rectangles / parent-child / step heatmap), turns, and a collapsed cost timeline. Session-specific, so it has no period switch; inside, **Overview / Detail** switches to Token breakdown, top tools and per-step costs.
 - **Summary bill**: **Overview / Detail / Relations** sub-tabs. Overview is KPIs, a one-line conclusion and the top 3 costliest tasks (red / gold / blue markers); Detail is time, task bill, tools, models and task types; Relations is the task graph alone.

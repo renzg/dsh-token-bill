@@ -11,9 +11,12 @@
   .primary-head { display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid var(--line); margin-bottom:14px; }
   .primary-tabs { display:flex; gap:4px; flex-wrap:wrap; }
   .primary-tools { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
-  .module-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:2px 0 12px; }
+  .module-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; margin:2px 0 12px; }
+  .module-heading { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .module-title { font-family:"Songti SC","STSong","Noto Serif SC",serif; font-size:20px; font-weight:600; letter-spacing:.06em; color:var(--ink); }
   .module-meta { font-size:11.5px; color:var(--muted); }
-  .subswitch { display:inline-grid; grid-template-columns:repeat(3,1fr); position:relative; padding:3px; margin:0 0 12px; border:1px solid var(--line); border-radius:99px; background:rgba(255,253,246,.7); }
+  .module-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-left:auto; padding-top:2px; }
+  .subswitch { display:inline-grid; grid-template-columns:repeat(3,1fr); position:relative; padding:3px; margin:0; border:1px solid var(--line); border-radius:99px; background:rgba(255,253,246,.7); }
   .subswitch .thumb { position:absolute; top:3px; bottom:3px; left:3px; width:calc((100% - 6px)/3); border-radius:99px; background:var(--navy); box-shadow:0 2px 7px rgba(42,74,120,.25); }
   .subswitch button { position:relative; z-index:1; border:0; background:transparent; color:var(--muted); padding:5px 14px; border-radius:99px; font:inherit; font-size:12px; }
   .subswitch button.on { color:#fff; font-weight:600; }
@@ -168,9 +171,10 @@ const actions = [
   ['high','先优化最贵的三个任务','前三个任务占了可归因费用的 51%，它们的写法决定了大部分账单。','优先给这类任务建立模板：固定输入、固定验收标准、固定停止条件。','结构性优化','任务集中度'],
 ];
 const actionsHTML = `<div class="suggestions">${actions.map(([p,t,w,a,s,b])=>`<div class="sug"><div class="sug-head"><span class="dot" style="background:${p==='high'?'#B55245':'#D9A441'}"></span><span class="sug-title">${t}</span><span class="sug-save">${s}</span></div><div class="sug-why">${w}</div><div class="sug-act">${a}</div><div class="sug-basis">${b}</div></div>`).join('')}</div>`;
-const moduleBar = `<div class="module-head"><div class="module-meta">2026-10-01 至 2026-10-12 · 账本保留 2026-10-01–2026-10-12</div><div class="seg"><button class="on">全部</button><button>近 7 天</button><button>近 30 天</button><button>本月</button></div></div>`;
-const subSwitch = tab==='summary' ? `<div class="subswitch"><span class="thumb"></span><button class="on">概览</button><button>明细</button><button>任务关联</button></div>` : '';
-document.getElementById('panel').innerHTML = moduleBar + subSwitch + (tab==='rapport'?`<div class="card" style="padding:18px 20px">${rapport}</div>`:tab==='actions'?actionsHTML:summary);
+const title = tab==='summary' ? '概览' : tab==='rapport' ? '协作默契度' : '动作优化';
+const subSwitch = tab==='summary' ? `<div class="subswitch"><span class="thumb"></span><button class="on">概览</button><button>明细</button><button>任务关联度</button></div>` : '';
+const moduleBar = `<div class="module-head"><div class="module-heading"><div class="module-title">${title}</div><div class="module-meta">2026-10-01 至 2026-10-12 · 账本保留 2026-10-01–2026-10-12</div></div><div class="module-controls">${subSwitch}<div class="seg"><button class="on">全部</button><button>近 7 天</button><button>近 30 天</button><button>本月</button></div></div></div>`;
+document.getElementById('panel').innerHTML = moduleBar + (tab==='rapport'?`<div class="card" style="padding:18px 20px">${rapport}</div>`:tab==='actions'?actionsHTML:summary);
 document.querySelectorAll('.pill').forEach(el=>el.addEventListener('click',()=>{location.search='?tab='+el.dataset.tab}));
 </script>
 </body>
