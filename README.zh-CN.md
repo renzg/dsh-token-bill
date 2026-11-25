@@ -14,6 +14,22 @@ dsh plugin --profile desktop add github:renzg/dsh-token-bill
 
 web profile 把 `desktop` 换成 `web`。npm 上的包名是 `@zhiyu.pub/dsh-token-bill`；在该包发布前，请使用上面的 GitHub 源安装。插件只读本机 `dsh-cost-meter` 账本与会话日志，不需要 API Key。
 
+## 演示
+
+以下均为示例数据，不代表任何真实账本或会话。
+
+### 汇总账单
+
+![汇总账单演示](docs/demo-summary.png)
+
+### 协作默契度
+
+![协作默契度演示](docs/demo-rapport.png)
+
+### 动作优化
+
+![动作优化演示](docs/demo-actions.png)
+
 ## 功能模块
 
 ### 顶部胶囊

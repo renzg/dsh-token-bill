@@ -14,6 +14,22 @@ dsh plugin --profile desktop add github:renzg/dsh-token-bill
 
 웹 프로필에서는 `desktop`을 `web`으로 바꾸세요. npm 패키지 이름은 `@zhiyu.pub/dsh-token-bill`이며, 공개 전에는 위 GitHub 소스에서 설치하세요. 로컬 `dsh-cost-meter` 원장과 세션 로그만 읽으며 API 키가 필요 없습니다.
 
+## 데모
+
+아래는 모두 샘플 데이터이며 실제 원장이나 세션이 아닙니다. 화면은 중국어 UI입니다.
+
+### 요약 명세
+
+![요약 명세 데모](docs/demo-summary.png)
+
+### 협업 궁합
+
+![협업 궁합 데모](docs/demo-rapport.png)
+
+### 액션 최적화
+
+![액션 최적화 데모](docs/demo-actions.png)
+
 ## 기능 모듈
 
 ### 상단 필

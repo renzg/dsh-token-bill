@@ -14,6 +14,22 @@ dsh plugin --profile desktop add github:renzg/dsh-token-bill
 
 web プロファイルでは `desktop` を `web` に。npm のパッケージ名は `@zhiyu.pub/dsh-token-bill` です。公開までは上記の GitHub ソースからインストールしてください。ローカルの `dsh-cost-meter` 台帳とセッションログのみを読み、API キーは不要です。
 
+## デモ
+
+以下はすべてサンプルデータで、実際の台帳やセッションではありません。画面は中国語 UI です。
+
+### 集計明細
+
+![集計明細のデモ](docs/demo-summary.png)
+
+### 協働の相性
+
+![協働の相性のデモ](docs/demo-rapport.png)
+
+### アクション最適化
+
+![アクション最適化のデモ](docs/demo-actions.png)
+
 ## 機能モジュール
 
 ### 上部のピル

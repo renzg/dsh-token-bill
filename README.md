@@ -14,6 +14,22 @@ dsh plugin --profile desktop add github:renzg/dsh-token-bill
 
 Use `--profile web` for a web profile. The scoped npm name is `@zhiyu.pub/dsh-token-bill`; install from this GitHub source until that package is published. The bundle reads the local `dsh-cost-meter` ledger and session logs only; no API key is needed.
 
+## Demo
+
+Sample data only — not a real ledger or session. Screenshots show the Chinese UI.
+
+### Summary bill
+
+![Summary bill demo](docs/demo-summary.png)
+
+### Collaboration fit
+
+![Collaboration fit demo](docs/demo-rapport.png)
+
+### Action tuning
+
+![Action tuning demo](docs/demo-actions.png)
+
 ## Modules
 
 ### Top pills

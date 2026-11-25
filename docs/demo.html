@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Token 账单 · demo</title>
+<style>
+  :root { --paper:#F2ECDE; --card:#FFFDF6; --ink:#3D3B4F; --muted:#75878A; --navy:#2A4A78; --teal:#159A99; --moon:#84A5D2; --gold:#D9A441; --red:#B55245; --line:rgba(42,74,120,.14); }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; font-size:13.5px; line-height:1.55; }
+  #shot { width:1180px; padding:26px 30px 34px; background:var(--paper); }
+  .head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:18px; }
+  .title { font-family:"Songti SC","STSong","Noto Serif SC",serif; font-size:26px; font-weight:600; letter-spacing:.08em; display:inline-block; padding-bottom:2px; border-bottom:2px solid rgba(21,154,153,.32); }
+  .sub { color:var(--muted); font-size:12px; margin-top:5px; }
+  .badge { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--teal); border:1px solid rgba(21,154,153,.32); background:rgba(21,154,153,.08); border-radius:99px; padding:3px 9px; margin-left:10px; vertical-align:3px; }
+  .tools { display:flex; align-items:center; gap:8px; }
+  .seg { display:flex; gap:2px; background:rgba(255,253,246,.7); padding:3px; border-radius:9px; border:1px solid var(--line); }
+  .seg button { border:0; background:transparent; color:var(--muted); padding:5px 10px; border-radius:6px; font:inherit; font-size:12px; }
+  .seg button.on { background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(42,74,120,.12); }
+  .btn { display:inline-flex; align-items:center; gap:5px; border:1px solid var(--line); background:var(--card); color:var(--ink); padding:6px 12px; border-radius:8px; font:inherit; font-size:12px; }
+  .top { background:linear-gradient(140deg,#f8f4eb,#FFFDF6 64%); border:1px solid var(--line); border-radius:16px; padding:16px 18px; box-shadow:0 8px 30px rgba(42,74,120,.06); }
+  .top-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
+  .pills { display:flex; gap:2px; background:rgba(255,253,246,.72); border:1px solid var(--line); border-radius:9px; padding:3px; }
+  .pill { display:inline-flex; align-items:center; gap:5px; border:0; background:transparent; color:var(--muted); font:inherit; font-size:12px; padding:6px 11px; border-radius:6px; }
+  .pill.on { background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(42,74,120,.13); }
+  .kpis { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:15px 16px; box-shadow:0 1px 2px rgba(42,74,120,.04); }
+  .kpi-head { display:flex; align-items:center; gap:7px; margin-bottom:2px; }
+  .kpi-icon { width:24px; height:24px; border-radius:7px; display:inline-flex; align-items:center; justify-content:center; flex:none; }
+  .kpi-l { font-size:10.5px; color:var(--muted); letter-spacing:.4px; }
+  .kpi-v { font-size:24px; font-weight:620; letter-spacing:-.2px; margin-top:4px; font-variant-numeric:tabular-nums; }
+  .kpi-s { font-size:11px; color:var(--muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+  .conclusion { margin-top:10px; grid-column:1/-1; }
+  .hl { border-left:2px solid var(--teal); padding:2px 0 2px 9px; color:var(--muted); font-size:12px; margin-top:6px; }
+  .top3 { grid-column:1/-1; display:grid; gap:4px; margin-top:2px; padding:10px 12px 12px; border:1px solid var(--line); border-radius:12px; background:var(--card); }
+  .top3-row { display:grid; grid-template-columns:22px minmax(0,1fr) auto; gap:10px; align-items:center; padding:8px 10px; border-left:3px solid transparent; border-radius:8px; }
+  .rank { width:20px; height:20px; border-radius:99px; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:650; }
+  .task-title { font-weight:560; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .meta { font-size:10.5px; color:var(--muted); margin-top:2px; }
+  .cost { font-weight:620; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .cost small { display:block; font-size:10px; color:var(--muted); font-weight:400; margin-top:1px; }
+  .match { display:flex; gap:18px; align-items:center; padding:15px 18px; border:1px solid var(--line); border-radius:14px; margin-bottom:16px; background:linear-gradient(135deg,#f7f8f2,#FFFDF6); }
+  .score { font-size:40px; font-weight:640; line-height:1; letter-spacing:-1.2px; font-variant-numeric:tabular-nums; }
+  .score small { font-size:12px; color:var(--muted); font-weight:400; margin-left:3px; letter-spacing:0; }
+  .match-label { font-size:14px; font-weight:600; margin-bottom:3px; }
+  .muted { color:var(--muted); }
+  .grid2 { display:grid; grid-template-columns:1.15fr .85fr; gap:18px; align-items:start; }
+  .radar-wrap { display:flex; flex-direction:column; align-items:center; }
+  .tags { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 12px; }
+  .tag { font-size:11px; line-height:1; padding:4px 9px; border-radius:99px; border:1px solid var(--line); background:#f8f4eb; color:var(--muted); white-space:nowrap; }
+  .tag.u { background:rgba(132,165,210,.16); border-color:rgba(42,74,120,.28); color:var(--ink); }
+  .tag.a { background:rgba(21,154,153,.14); border-color:rgba(21,154,153,.34); color:var(--ink); }
+  .axis { display:grid; grid-template-columns:110px 1fr 58px; gap:10px; align-items:center; padding:5px 0; }
+  .axis-l { font-size:11.5px; color:var(--ink); }
+  .axis-l small { display:block; font-size:9.5px; color:var(--muted); margin-top:1px; }
+  .axis-bars { display:grid; gap:3px; }
+  .track { height:5px; border-radius:99px; background:#eee7d7; overflow:hidden; }
+  .track i { display:block; height:100%; border-radius:99px; }
+  .axis-v { font-size:10.5px; color:var(--muted); text-align:right; font-variant-numeric:tabular-nums; }
+  .suggestions { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .sug { border:1px solid var(--line); border-radius:14px; padding:14px 16px; background:var(--card); display:flex; flex-direction:column; gap:7px; }
+  .sug-head { display:flex; align-items:center; gap:7px; }
+  .dot { width:7px; height:7px; border-radius:99px; flex:none; }
+  .sug-title { font-weight:620; font-size:13px; }
+  .sug-save { margin-left:auto; font-size:11px; color:var(--teal); font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .sug-why { color:var(--muted); font-size:12px; }
+  .sug-act { font-size:12px; border-left:2px solid var(--line); padding-left:8px; }
+  .sug-basis { font-size:10.5px; color:var(--muted); }
+  .note { font-size:11px; color:var(--muted); margin-top:10px; }
+  @media (max-width: 900px) { .kpis { grid-template-columns:repeat(3,1fr); } }
+</style>
+</head>
+<body>
+<div id="shot">
+  <div class="head">
+    <div>
+      <div class="title">Token 账单<span class="badge">DEMO · 示例数据</span></div>
+      <div class="sub">2026-10-01 至 2026-10-12 · 账本保留 2026-10-01–2026-10-12 · 生成于 09:12:08</div>
+    </div>
+    <div class="tools">
+      <div class="seg"><button class="on">全部</button><button>近 7 天</button><button>近 30 天</button><button>本月</button></div>
+      <button class="btn">↻ 刷新</button>
+    </div>
+  </div>
+  <div class="top">
+    <div class="top-head">
+      <div class="pills" id="pills"></div>
+      <button class="btn">⌃ 收起</button>
+    </div>
+    <div id="panel"></div>
+  </div>
+  <div class="note">示例数据，仅用于界面演示；不代表任何真实账本或会话。</div>
+</div>
+<script>
+const iconPaths = {
+  clock: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2',
+  receipt: 'M6 2h12v20l-3-2-3 2-3-2-3 2V2zM9 7h6M9 11h6M9 15h4',
+  radar: 'M12 2a10 10 0 1 0 10 10M12 12l4.5-4.5M12 12a6 6 0 1 0 6 6M12 12a2 2 0 1 0 2 2',
+  sparkles: 'M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3zM19 15l.7 2.3L22 18l-2.3.7L19 21l-.7-2.3L16 18l2.3-.7L19 15z',
+  coins: 'M12 6c4.4 0 8-1.3 8-3s-3.6-3-8-3-8 1.3-8 3 3.6 3 8 3zM4 3v6c0 1.7 3.6 3 8 3s8-1.3 8-3V3M4 9v6c0 1.7 3.6 3 8 3s8-1.3 8-3V9',
+  activity: 'M3 12h4l2.5-7 5 14 2.5-7h4',
+  target: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4z',
+  cards: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z',
+};
+function icon(name, size=13) {
+  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="${iconPaths[name]}"/></svg>`;
+}
+const tabs = [['session','本轮会话','clock'],['summary','汇总账单','receipt'],['rapport','协作默契度','radar'],['actions','动作优化','sparkles']];
+const tab = new URLSearchParams(location.search).get('tab') || 'summary';
+document.getElementById('pills').innerHTML = tabs.map(([key,label,ic]) => `<button class="pill ${key===tab?'on':''}" data-tab="${key}">${icon(ic)}${label}</button>`).join('');
+const kpi = (label,value,sub,ic,color) => `<div class="kpi"><div class="kpi-head"><span class="kpi-icon" style="color:${color};background:${color}22">${icon(ic)}</span><span class="kpi-l">${label}</span></div><div class="kpi-v">${value}</div><div class="kpi-s">${sub}</div></div>`;
+const summary = `
+  <div class="kpis">
+    ${kpi('总花费','¥42.86','日均 ¥3.57','receipt','#B55245')}
+    ${kpi('Token 总量','3.28 亿','输出 128.4 万 · 缓存 3.14 亿','coins','#84A5D2')}
+    ${kpi('调用次数','1,204','单次 ¥0.036','activity','#159A99')}
+    ${kpi('缓存命中','95.7%','未缓存输入 141.2 万','target','#45B8A1')}
+    ${kpi('会话数','12','覆盖 12 天','cards','#75878A')}
+    <div class="card conclusion"><div class="kpi-l" style="margin-bottom:4px">一句话结论</div>
+      <div class="hl">最贵的一项「品牌视觉规范整理」占 24%，前三项合计占 51%。</div>
+      <div class="hl">约 34% 的花费、29% 的调用落在峰时，错峰是最大的一笔可控成本。</div>
+      <div class="hl">缓存命中 95.7%，重复上下文基本都走了低价缓存。</div>
+    </div>
+    <div class="top3"><div class="kpi-l">消耗成本 Top 3</div>
+      ${[['品牌视觉规范整理','10-08 · 视觉设计','¥10.28','24%','#B55245','#ffffff'],
+         ['产品落地页改版','10-10 · 开发实现','¥7.90','18%','#D9A441','#3D3B4F'],
+         ['季度复盘数据看板','10-06 · 数据分析','¥5.46','13%','#84A5D2','#2A4A78']].map(([t,m,c,p,bg,fg],i)=>`
+        <div class="top3-row" style="border-left-color:${bg};background:${bg}14">
+          <span class="rank" style="background:${bg};color:${fg}">${i+1}</span>
+          <div><div class="task-title">${t}</div><div class="meta">${m}</div></div>
+          <div class="cost">${c}<small>${p}</small></div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+const axes = [
+  ['目标共识','你的明确度 / AI 的准确度',68,84],
+  ['信息密度','你的供给 / AI 的解释',72,80],
+  ['探索共鸣','你的探索 / AI 的主动',47,69],
+  ['节奏合拍','你的迭代 / AI 的响应',61,78],
+  ['上下文接力','你的供给 / AI 的记忆',58,74],
+  ['验收一致','你的验收 / AI 的自检',74,86],
+];
+function radar() {
+  const size=320, cx=160, cy=155, r=92, n=axes.length;
+  const pt=(i,k)=>[cx+Math.cos(-Math.PI/2+i*2*Math.PI/n)*r*k, cy+Math.sin(-Math.PI/2+i*2*Math.PI/n)*r*k];
+  const poly=k=>axes.map((_,i)=>pt(i,k).join(',')).join(' ');
+  const shape=k=>axes.map((a,i)=>pt(i,Math.max(.03,a[k]/100)).join(',')).join(' ');
+  return `<svg viewBox="0 0 320 320" width="300" height="300" role="img" aria-label="协作默契雷达图">
+    ${[.25,.5,.75,1].map(k=>`<polygon points="${poly(k)}" fill="none" stroke="rgba(42,74,120,.14)" stroke-width="1"/>`).join('')}
+    ${axes.map((_,i)=>{const [x,y]=pt(i,1);return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(42,74,120,.12)"/>`}).join('')}
+    <polygon points="${shape(2)}" fill="rgba(132,165,210,.18)" stroke="#84A5D2" stroke-width="1.7"/>
+    <polygon points="${shape(3)}" fill="rgba(21,154,153,.16)" stroke="#159A99" stroke-width="1.7"/>
+    ${axes.map((a,i)=>{const [x,y]=pt(i,1.22);const anchor=Math.abs(x-cx)<8?'middle':x>cx?'start':'end';return `<text x="${x}" y="${y+4}" text-anchor="${anchor}" font-size="10.5" fill="#75878A">${a[0]}</text>`}).join('')}
+  </svg>`;
+}
+const rapport = `
+  <div class="match"><div class="score">82<small>/100</small></div><div><div class="match-label">高度默契 · 互补型</div><div class="muted" style="font-size:12px">「探索共鸣」落差最大：你 47，AI 69。「验收一致」上你们相对接近；整体更像互补：你放开的地方，AI 能接住。</div></div></div>
+  <div class="grid2">
+    <div><div class="radar-wrap">${radar()}<div style="font-size:11px;color:#75878A">你 <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#84A5D2;margin:0 4px"></span> AI <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#159A99;margin:0 4px"></span></div></div></div>
+    <div><div class="kpi-l">你的类型：建筑型</div><div class="note" style="margin:2px 0 8px">先把要求和边界想清楚，再一次交付。</div>
+      <div class="kpi-l">你的标签</div><div class="tags">${['目标清晰','长需求','强验收','开发实现偏多'].map(t=>`<span class="tag u">${t}</span>`).join('')}</div>
+      <div class="kpi-l">AI 的响应标签</div><div class="tags">${['少出错','响应快','主动查证','会自检'].map(t=>`<span class="tag a">${t}</span>`).join('')}</div>
+      ${axes.map(([label,hint,u,a])=>`<div class="axis"><span class="axis-l">${label}<small>${hint}</small></span><div class="axis-bars"><div class="track"><i style="width:${u}%;background:#84A5D2"></i></div><div class="track"><i style="width:${a}%;background:#159A99"></i></div></div><span class="axis-v">${u} / ${a}</span></div>`).join('')}
+    </div>
+  </div>
+  <div class="note">AI 侧为行为代理指标：准确=工具成功率与轮次完成率，及时=首响中位延迟，主动=工具与查证行为。</div>`;
+const actions = [
+  ['high','把高峰时段的调用挪到谷时','约 34% 的花费、29% 的调用落在峰时（周末与节假日为谷价），峰时单价约为谷时的两倍。','峰时窗口约 09:00–12:00、14:00–18:00（北京时间）。把批量整理、生成、重排这类不赶时间的工作放到谷时。','约 ¥7.30','按峰时部分节省 50% 粗估'],
+  ['medium','给上下文减重','平均每次调用携带 21.4 万输入 token，上下文越长，每一轮都在为历史付费。','长任务拆成子会话；阶段性压缩；把“已完成”的探索过程移出主上下文。','约 ¥5.10','按输入侧可压缩 10%–20% 粗估'],
+  ['medium','把简单任务分给更便宜的模型','高价模型承担了 18% 的费用，约为低价模型的 3.2 倍。','检索、格式化、短文案、机械改写交给 flash；长推理和复杂代码留给高价模型。','约 ¥2.40','假设 30% 的高价调用可替换'],
+  ['high','先优化最贵的三个任务','前三个任务占了可归因费用的 51%，它们的写法决定了大部分账单。','优先给这类任务建立模板：固定输入、固定验收标准、固定停止条件。','结构性优化','任务集中度'],
+];
+const actionsHTML = `<div class="suggestions">${actions.map(([p,t,w,a,s,b])=>`<div class="sug"><div class="sug-head"><span class="dot" style="background:${p==='high'?'#B55245':'#D9A441'}"></span><span class="sug-title">${t}</span><span class="sug-save">${s}</span></div><div class="sug-why">${w}</div><div class="sug-act">${a}</div><div class="sug-basis">${b}</div></div>`).join('')}</div>`;
+document.getElementById('panel').innerHTML = tab==='rapport'?rapport:tab==='actions'?actionsHTML:summary;
+document.querySelectorAll('.pill').forEach(el=>el.addEventListener('click',()=>{location.search='?tab='+el.dataset.tab}));
+</script>
+</body>
+</html>
