@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | **한국어**
 
-버전 **0.1.5** (2026-11-25) · 패키지 `@zhiyu.pub/dsh-token-bill`.
+버전 **0.1.6** (2026-11-25) · 패키지 `@zhiyu.pub/dsh-token-bill`.
 
 로컬 비용 원장과 세션 로그를 읽기 쉬운 **Token 명세**로 바꾸는 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)(DSH) 번들입니다. 대화 페이지에 **명세(账单)** 뷰를 추가합니다.
 

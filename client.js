@@ -1429,6 +1429,18 @@ window.__ModuleLoader__.load({
         h(Tip, { tip }))
     }
 
+    function PeriodBar({ period, onChange }) {
+      return h('div', { className: 'tb-seg', role: 'group', 'aria-label': '账期' },
+        [['all', '全部'], ['7', '近 7 天'], ['30', '近 30 天'], ['month', '本月']].map(([key, label]) =>
+          h('button', { key, type: 'button', 'aria-pressed': period === key, onClick: () => onChange(key) }, label)))
+    }
+
+    function ModuleBar({ meta, period, onChange }) {
+      return h('div', { className: 'tb-module-head' },
+        h('div', { className: 'tb-module-meta' }, meta || ''),
+        h(PeriodBar, { period, onChange }))
+    }
+
     function Switch({ items, value, onChange, accent = VI.teal }) {
       const index = Math.max(0, items.findIndex(([key]) => key === value))
       return h('div', {
@@ -1625,6 +1637,87 @@ window.__ModuleLoader__.load({
               h('div', { className: `tb-collapse${timelineOpen ? ' tb-collapse-open' : ''}`, 'aria-hidden': !timelineOpen },
                 h('div', { className: 'tb-collapse-inner' }, h(SessionTimeline, { session, data })))))
           : h(SessionDetail, { session, data }))
+    }
+
+    function ReportButton({ data, sessionId }) {
+      const [open, setOpen] = useState(false)
+      const [busy, setBusy] = useState(false)
+      const [error, setError] = useState('')
+      const ref = useRef(null)
+      useEffect(() => {
+        if (!open) return undefined
+        const close = event => { if (!ref.current?.contains(event.target)) setOpen(false) }
+        document.addEventListener('pointerdown', close)
+        return () => document.removeEventListener('pointerdown', close)
+      }, [open])
+      const download = async format => {
+        setOpen(false)
+        setBusy(true)
+        setError('')
+        try {
+          const params = new URLSearchParams({
+            format,
+            from: data.range?.from || '',
+            to: data.range?.to || '',
+            currency: data.currency || 'CNY',
+            sessionId: sessionId || '',
+          })
+          const response = await fetch(`/token-bill/report/export?${params.toString()}`)
+          if (!response.ok) {
+            let message = `HTTP ${response.status}`
+            try { const body = await response.json(); if (body?.error) message = body.error } catch {}
+            throw new Error(message)
+          }
+          const blob = await response.blob()
+          const disposition = response.headers.get('content-disposition') || ''
+          const match = /filename="([^"]+)"/.exec(disposition)
+          const name = match?.[1] || `token-bill.${format}`
+          const href = URL.createObjectURL(blob)
+          const anchor = document.createElement('a')
+          anchor.href = href
+          anchor.download = name
+          document.body.appendChild(anchor)
+          anchor.click()
+          anchor.remove()
+          setTimeout(() => URL.revokeObjectURL(href), 1000)
+        } catch (reason) {
+          setError(reason?.message || '报告生成失败')
+        } finally {
+          setBusy(false)
+        }
+      }
+      const items = [
+        ['html', 'HTML', '可视化网页报告'],
+        ['pdf', 'PDF', '适合打印/分享'],
+        ['docx', 'DOCX', 'Word 文档报告'],
+        ['json', 'JSON', '原始账单数据'],
+      ]
+      return h('div', { className: 'tb-report', ref },
+        h('button', {
+          className: 'tb-btn', type: 'button', 'aria-haspopup': 'menu', 'aria-expanded': open,
+          disabled: busy, onClick: () => setOpen(value => !value),
+        }, h(Icon, { name: 'download', size: 13 }), busy ? '生成中…' : '生成报告', h(Icon, { name: 'chevronDown', size: 12 })),
+        open ? h('div', { className: 'tb-report-menu', role: 'menu' },
+          items.map(([format, label, hint]) => h('button', {
+            key: format, type: 'button', className: 'tb-report-item', role: 'menuitem',
+            onClick: () => download(format),
+          }, h(Icon, { name: 'fileText', size: 14 }), h('span', null,
+            h('strong', null, label), h('small', null, hint))))) : null,
+        error ? h('div', { className: 'tb-report-error', role: 'alert' }, error) : null)
+    }
+
+    function PrimaryTabs({ tab, onTab, reload, loading, data, sessionId }) {
+      return h('div', { className: 'tb-primary-head' },
+        h('nav', { className: 'tb-primary-tabs', role: 'tablist', 'aria-label': '账单模块' },
+          [['session', '本轮会话', 'clock'], ['total', '汇总账单', 'receipt'], ['rapport', '协作默契度', 'radar'], ['actions', '动作优化', 'sparkles']].map(([key, label, icon]) =>
+            h('button', {
+              key, type: 'button', role: 'tab', className: 'tb-primary-tab', 'aria-selected': tab === key,
+              onClick: () => onTab(key),
+            }, h(Icon, { name: icon, size: 14 }), label))),
+        h('div', { className: 'tb-primary-tools' },
+          h(ReportButton, { data, sessionId }),
+          h('button', { className: 'tb-btn', type: 'button', onClick: reload, disabled: loading },
+            h(Icon, { name: 'refresh', size: 13 }), loading ? '读取中…' : '刷新')))
     }
 
     function TotalModule({ data, period, onPeriod, domain, onDomain, tool, onTool }) {
