@@ -226,7 +226,22 @@ window.__ModuleLoader__.load({
       .tb-stepcell:hover { transform: scale(1.35); position: relative; z-index: 1; box-shadow: 0 0 0 1px rgba(42,74,120,.35); }
       .tb-costtype-meta { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--tb-line); color: ${C.secondary}; font-size: 11px; }
       @media (max-width: 640px) { .tb-costtypes { flex-direction: column; align-items: flex-start; } .tb-costtype-list { width: 100%; } }
-      .tb-session-head { margin-bottom: 12px; }
+      .tb-session-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+      .tb-switch { display: inline-grid; grid-template-columns: repeat(var(--tb-switch-count), 1fr); position: relative; isolation: isolate; padding: 3px; border: 1px solid var(--tb-line); border-radius: 99px; background: color-mix(in srgb, var(--tb-card) 70%, ${VI.ivory}); }
+      .tb-switch-thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--tb-switch-count)); border-radius: 99px; background: var(--tb-switch-accent); box-shadow: 0 2px 7px color-mix(in srgb, var(--tb-switch-accent) 35%, transparent); transform: translateX(calc(var(--tb-switch-index) * 100%)); transition: transform .26s cubic-bezier(.22,1,.36,1), background .2s ease; z-index: 0; }
+      .tb-switch button { position: relative; z-index: 1; border: 0; border-radius: 99px; background: transparent; color: ${C.secondary}; padding: 5px 14px; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; transition: color .18s ease; }
+      .tb-switch button[aria-selected="true"] { color: #fff; font-weight: 600; }
+      .tb-module-switch { margin: 2px 0; }
+      .tb-detail-line { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(42,74,120,.08); font-size: 11.5px; }
+      .tb-detail-line:last-child { border-bottom: 0; }
+      .tb-step-table { display: grid; max-height: 430px; overflow: auto; }
+      .tb-step-tr { display: grid; grid-template-columns: 32px 104px minmax(0, 1fr) 64px 84px; gap: 8px; align-items: center; padding: 5px 4px; border-bottom: 1px solid rgba(42,74,120,.08); font-size: 11px; }
+      .tb-step-th { position: sticky; top: 0; z-index: 1; background: var(--tb-card); color: ${C.secondary}; font-size: 10px; }
+      .tb-step-tr .right { text-align: right; }
+      .tb-step-tool { color: ${C.secondary}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .tb-step-meta { color: ${C.secondary}; }
+      .tb-step-dot { display: inline-block; width: 7px; height: 7px; border-radius: 3px; margin-right: 5px; }
+      @media (max-width: 640px) { .tb-step-tr { grid-template-columns: 28px 90px minmax(0,1fr) 54px 72px; } }
       .tb-session-ring { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
       .tb-primary-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; border-bottom: 1px solid var(--tb-line); }
       .tb-primary-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -1414,6 +1429,106 @@ window.__ModuleLoader__.load({
         h(Tip, { tip }))
     }
 
+    function Switch({ items, value, onChange, accent = VI.teal }) {
+      const index = Math.max(0, items.findIndex(([key]) => key === value))
+      return h('div', {
+        className: 'tb-switch', role: 'tablist',
+        style: { '--tb-switch-count': items.length, '--tb-switch-index': index, '--tb-switch-accent': accent },
+      },
+        h('span', { className: 'tb-switch-thumb', 'aria-hidden': true }),
+        items.map(([key, label]) => h('button', {
+          key, type: 'button', role: 'tab', 'aria-selected': value === key,
+          onClick: () => onChange(key),
+        }, label)))
+    }
+
+    function SessionDetail({ session, data }) {
+      const steps = [...(session.costSteps || [])].sort((a, b) => b.cost - a.cost).slice(0, 120)
+      const tools = session.topTools || []
+      const breakdown = session.breakdown || {}
+      const rows = [
+        ['输入', breakdown.input], ['输出', breakdown.output],
+        ['缓存读取', breakdown.cacheRead], ['缓存写入', breakdown.cacheWrite],
+        ['推理', breakdown.reasoning],
+      ]
+      return h('div', { className: 'tb-session-detail' },
+        h('div', { className: 'tb-grid2' },
+          h('div', { className: 'tb-card' },
+            h('div', { className: 'tb-card-t', style: { marginBottom: 8 } }, 'Token 构成'),
+            rows.map(([label, value]) => h('div', { key: label, className: 'tb-detail-line' },
+              h('span', null, label), h('span', null, tokens(value || 0))))),
+          h('div', { className: 'tb-card' },
+            h('div', { className: 'tb-card-t', style: { marginBottom: 8 } }, '工具 Top'),
+            tools.length ? tools.slice(0, 10).map((tool, index) => h('div', { key: tool.name, className: 'tb-detail-line' },
+              h('span', null, `${index + 1}. ${shortTool(tool.name)}`), h('span', null, `${tool.count} 次`))) : h('div', { className: 'tb-empty' }, '没有工具调用。'))),
+        h('div', { className: 'tb-card', style: { marginTop: 12 } },
+          h('div', { className: 'tb-card-h' },
+            h('span', { className: 'tb-card-t' }, '步骤明细'),
+            h('span', { className: 'tb-card-s' }, '按费用排序 · 前 120 步')),
+          steps.length ? h('div', { className: 'tb-step-table', role: 'table' },
+            h('div', { className: 'tb-step-tr tb-step-th', role: 'row' },
+              ['#', '类别', '工具 / 模型', '轮/步', '费用'].map((label, index) => h('span', { key: label, role: 'columnheader', className: index === 4 ? 'right' : '' }, label))),
+            steps.map((row, index) => h('div', { key: row.index, className: 'tb-step-tr', role: 'row' },
+              h('span', { role: 'cell', className: 'tb-step-num' }, String(index + 1)),
+              h('span', { role: 'cell' }, h('i', { className: 'tb-step-dot', style: { background: COST_TYPE_COLORS[row.kind] || VI.gray } }), row.label),
+              h('span', { role: 'cell', className: 'tb-step-tool' }, row.tools.length ? row.tools.map(shortTool).join('、') : (row.model || '模型回复')),
+              h('span', { role: 'cell', className: 'tb-step-meta' }, `${row.turn || '—'} / ${row.step || '—'}`),
+              h('span', { role: 'cell', className: 'right' }, money(row.cost, data.symbol)))))
+            : h('div', { className: 'tb-empty' }, '没有步骤数据。')),
+        h('div', { className: 'tb-note' }, '步骤费用按该次调用的 token 用量分摊；工具与模型来自会话日志。'))
+    }
+
+    function CostComposition({ session, data }) {
+      const [costView, setCostView] = useState('share')
+      const costTypes = session.costTypes || []
+      const costMeta = session.costTypeMeta || { steps: session.calls || 0, calls: session.calls || 0, avgCost: session.costPerTurn || 0 }
+      const total = costTypes.reduce((sum, type) => sum + type.cost, 0) || session.cost || 0
+      const ringParts = costTypes.map(type => ({ label: type.label, value: type.cost, color: COST_TYPE_COLORS[type.kind] || VI.gray }))
+      const list = costTypes.map(type => h('div', { key: type.kind, className: 'tb-costtype-row' },
+        h('span', { className: 'tb-costtype-dot', style: { background: COST_TYPE_COLORS[type.kind] || VI.gray } }),
+        h('span', { className: 'tb-costtype-name' }, type.label),
+        h('span', { className: 'tb-costtype-cost' }, money(type.cost, data.symbol)),
+        h('span', { className: 'tb-costtype-share' }, pct(type.share, 1)),
+        h('div', { className: 'tb-costtype-bar' }, h('i', { style: { width: `${Math.max(2, type.share * 100)}%`, background: COST_TYPE_COLORS[type.kind] || VI.gray } }))))
+      return h('div', { className: 'tb-card', style: { marginTop: 12 } },
+        h('div', { className: 'tb-card-h' },
+          h('span', { className: 'tb-card-t' }, '费用类型构成'),
+          h('div', { className: 'tb-seg', role: 'group', 'aria-label': '费用构成视图', style: { flexWrap: 'wrap' } },
+            [['share', '归类占比'], ['rect', '矩形分布'], ['tree', '父子归属'], ['heat', '步骤热力图']].map(([key, label]) =>
+              h('button', { key, type: 'button', 'aria-pressed': costView === key, onClick: () => setCostView(key) }, label)))),
+        costTypes.length
+          ? (costView === 'share'
+            ? h('div', { className: 'tb-costtypes' },
+              h('div', { className: 'tb-costtype-ring' },
+                h(Ring, { parts: ringParts, size: 150, stroke: 18, centerValue: money(total, data.symbol), centerLabel: '总费用' })),
+              h('div', { className: 'tb-costtype-list' }, list))
+            : costView === 'rect'
+              ? h(CostTreemap, { types: costTypes, data })
+              : costView === 'tree'
+                ? h(Sunburst, { root: session.costAttribution || { children: [] }, symbol: data.symbol, ariaLabel: '费用父子归属' })
+                : h(StepHeatmap, { session, data }))
+          : h('div', { className: 'tb-empty' }, '本轮还没有可归类的调用。'),
+        h('div', { className: 'tb-costtype-meta' }, `步骤 ${costMeta.steps} · 调用 ${costMeta.calls} · 单步均值 ${money(costMeta.avgCost, data.symbol)} · 最高 10 步占比 ${pct(costMeta.top10Share || 0, 1)}`),
+        h('div', { className: 'tb-note' }, costView === 'tree'
+          ? '内圈为费用类别，外圈为工具或模型；费用按步骤分摊。'
+          : costView === 'heat'
+            ? '每格一步，颜色区分类别，深浅表示费用。'
+            : costView === 'rect'
+              ? '矩形面积表示费用占比；颜色区分类别。'
+              : '归类来自会话调用与工具名；单步费用按 token 用量分摊。'))
+    }
+
+    function SessionOverview({ session, data }) {
+      return h(React.Fragment, null,
+        h('div', { className: 'tb-kpis' },
+          h(Kpi, { label: '本轮费用', value: money(session.cost, data.symbol), sub: `占本期 ${pct((session.cost || 0) / (data.totals.cost || 1))}`, icon: 'receipt', iconColor: '#B55245' }),
+          h(Kpi, { label: 'Token', value: tokens(session.tokens), sub: `缓存 ${pct(session.cacheShare || 0, 1)}`, icon: 'coins', iconColor: VI.moon }),
+          h(Kpi, { label: '调用', value: String(session.calls || 0), sub: `轮次 ${session.turns || '—'}`, icon: 'activity', iconColor: VI.teal }),
+          h(Kpi, { label: '单轮费用', value: money(session.costPerTurn || 0, data.symbol), sub: `首响 ${(session.medianLatencySec || 0).toFixed(1)}s`, icon: 'clock', iconColor: '#D9A441' }),
+          h(Kpi, { label: '工具', value: String(session.tools || 0), sub: `错误 ${pct(session.toolErrorRate || 0, 1)}`, icon: 'wrench', iconColor: VI.jade })),
+        h(CostComposition, { session, data }))
+    }
+
     function CostTreemap({ types, data }) {
       const { tip, show, hide } = useTip()
       if (!types.length) return h('div', { className: 'tb-empty' }, '没有可画的费用类型。')
@@ -1486,173 +1601,50 @@ window.__ModuleLoader__.load({
     }
 
     function SessionBill({ data }) {
+      const [view, setView] = useState('overview')
       const [timelineOpen, setTimelineOpen] = useState(false)
-      const [costView, setCostView] = useState('share')
       const session = data.session
       if (!session) return h('div', { className: 'tb-empty' }, '本轮会话还没有计费记录。')
-      const costTypes = session.costTypes || []
-      const costMeta = session.costTypeMeta || { steps: session.calls || 0, calls: session.calls || 0, avgCost: session.costPerTurn || 0 }
-      const total = costTypes.reduce((sum, type) => sum + type.cost, 0) || session.cost || 0
-      const ringParts = costTypes.map(type => ({ label: type.label, value: type.cost, color: COST_TYPE_COLORS[type.kind] || VI.gray }))
-      const list = costTypes.map(type => h('div', { key: type.kind, className: 'tb-costtype-row' },
-        h('span', { className: 'tb-costtype-dot', style: { background: COST_TYPE_COLORS[type.kind] || VI.gray } }),
-        h('span', { className: 'tb-costtype-name' }, type.label),
-        h('span', { className: 'tb-costtype-cost' }, money(type.cost, data.symbol)),
-        h('span', { className: 'tb-costtype-share' }, pct(type.share, 1)),
-        h('div', { className: 'tb-costtype-bar' }, h('i', { style: { width: `${Math.max(2, type.share * 100)}%`, background: COST_TYPE_COLORS[type.kind] || VI.gray } }))))
       return h('div', { className: 'tb-session' },
         h('div', { className: 'tb-session-head' },
           h('div', null,
             h('div', { className: 'tb-card-t' }, '账单明细'),
             h('div', { className: 'tb-card-s' }, `${session.title || '当前会话'} · ${session.date || ''} · ${session.domainLabel || ''} · ${session.turns || '—'} 轮 · ${(session.models || []).join('、') || '—'}`))),
-        h('div', { className: 'tb-kpis' },
-          h(Kpi, { label: '本轮费用', value: money(session.cost, data.symbol), sub: `占本期 ${pct((session.cost || 0) / (data.totals.cost || 1))}`, icon: 'receipt', iconColor: '#B55245' }),
-          h(Kpi, { label: 'Token', value: tokens(session.tokens), sub: `缓存 ${pct(session.cacheShare || 0, 1)}`, icon: 'coins', iconColor: VI.moon }),
-          h(Kpi, { label: '调用', value: String(session.calls || 0), sub: `轮次 ${session.turns || '—'}`, icon: 'activity', iconColor: VI.teal }),
-          h(Kpi, { label: '单轮费用', value: money(session.costPerTurn || 0, data.symbol), sub: `首响 ${(session.medianLatencySec || 0).toFixed(1)}s`, icon: 'clock', iconColor: '#D9A441' }),
-          h(Kpi, { label: '工具', value: String(session.tools || 0), sub: `错误 ${pct(session.toolErrorRate || 0, 1)}`, icon: 'wrench', iconColor: VI.jade })),
-        h('div', { className: 'tb-card', style: { marginTop: 12 } },
-          h('div', { className: 'tb-card-h' },
-            h('span', { className: 'tb-card-t' }, '费用类型构成'),
-            h('div', { className: 'tb-seg', role: 'group', 'aria-label': '费用构成视图', style: { flexWrap: 'wrap' } },
-              [['share', '归类占比'], ['rect', '矩形分布'], ['tree', '父子归属'], ['heat', '步骤热力图']].map(([key, label]) =>
-                h('button', { key, type: 'button', 'aria-pressed': costView === key, onClick: () => setCostView(key) }, label)))),
-          costTypes.length
-            ? (costView === 'share'
-              ? h('div', { className: 'tb-costtypes' },
-                h('div', { className: 'tb-costtype-ring' },
-                  h(Ring, { parts: ringParts, size: 150, stroke: 18, centerValue: money(total, data.symbol), centerLabel: '总费用' })),
-                h('div', { className: 'tb-costtype-list' }, list))
-              : costView === 'rect'
-                ? h(CostTreemap, { types: costTypes, data })
-                : costView === 'tree'
-                  ? h(Sunburst, { root: session.costAttribution || { children: [] }, symbol: data.symbol, ariaLabel: '费用父子归属' })
-                  : h(StepHeatmap, { session, data }))
-            : h('div', { className: 'tb-empty' }, '本轮还没有可归类的调用。'),
-          h('div', { className: 'tb-costtype-meta' }, `步骤 ${costMeta.steps} · 调用 ${costMeta.calls} · 单步均值 ${money(costMeta.avgCost, data.symbol)} · 最高 10 步占比 ${pct(costMeta.top10Share || 0, 1)}`),
-          h('div', { className: 'tb-note' }, costView === 'tree'
-            ? '内圈为费用类别，外圈为工具或模型；费用按步骤分摊。'
-            : costView === 'heat'
-              ? '每格一步，颜色区分类别，深浅表示费用。'
-              : costView === 'rect'
-                ? '矩形面积表示费用占比；颜色区分类别。'
-                : '归类来自会话调用与工具名；单步费用按 token 用量分摊。')),
-        h('div', { className: 'tb-card', style: { marginTop: 12 } },
-          h('div', { className: 'tb-card-h' },
-            h('span', { className: 'tb-card-t' }, '费用走势'),
-            h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
-              h('span', { className: 'tb-card-s' }, `累计 ${money(session.cost, data.symbol)} · 按 ${session.bucketMinutes || 5} 分钟分摊`),
-              h('button', { className: 'tb-btn', type: 'button', 'aria-expanded': timelineOpen, onClick: () => setTimelineOpen(value => !value) },
-                h(Icon, { name: timelineOpen ? 'chevronUp' : 'chevronDown', size: 12 }), timelineOpen ? '收起' : '展开'))),
-          h('div', { className: `tb-collapse${timelineOpen ? ' tb-collapse-open' : ''}`, 'aria-hidden': !timelineOpen },
-            h('div', { className: 'tb-collapse-inner' }, h(SessionTimeline, { session, data })))))
-    }
-
-    function PeriodBar({ period, onChange }) {
-      return h('div', { className: 'tb-seg', role: 'group', 'aria-label': '账期' },
-        [['all', '全部'], ['7', '近 7 天'], ['30', '近 30 天'], ['month', '本月']].map(([key, label]) =>
-          h('button', { key, type: 'button', 'aria-pressed': period === key, onClick: () => onChange(key) }, label)))
-    }
-
-    function ModuleBar({ meta, period, onChange }) {
-      return h('div', { className: 'tb-module-head' },
-        h('div', { className: 'tb-module-meta' }, meta || ''),
-        h(PeriodBar, { period, onChange }))
-    }
-
-    function ReportButton({ data, sessionId }) {
-      const [open, setOpen] = useState(false)
-      const [busy, setBusy] = useState(false)
-      const [error, setError] = useState('')
-      const ref = useRef(null)
-      useEffect(() => {
-        if (!open) return undefined
-        const close = event => { if (!ref.current?.contains(event.target)) setOpen(false) }
-        document.addEventListener('pointerdown', close)
-        return () => document.removeEventListener('pointerdown', close)
-      }, [open])
-      const download = async format => {
-        setOpen(false)
-        setBusy(true)
-        setError('')
-        try {
-          const params = new URLSearchParams({
-            format,
-            from: data.range?.from || '',
-            to: data.range?.to || '',
-            currency: data.currency || 'CNY',
-            sessionId: sessionId || '',
-          })
-          const response = await fetch(`/token-bill/report/export?${params.toString()}`)
-          if (!response.ok) {
-            let message = `HTTP ${response.status}`
-            try { const body = await response.json(); if (body?.error) message = body.error } catch {}
-            throw new Error(message)
-          }
-          const blob = await response.blob()
-          const disposition = response.headers.get('content-disposition') || ''
-          const match = /filename="([^"]+)"/.exec(disposition)
-          const name = match?.[1] || `token-bill.${format}`
-          const href = URL.createObjectURL(blob)
-          const anchor = document.createElement('a')
-          anchor.href = href
-          anchor.download = name
-          document.body.appendChild(anchor)
-          anchor.click()
-          anchor.remove()
-          setTimeout(() => URL.revokeObjectURL(href), 1000)
-        } catch (reason) {
-          setError(reason?.message || '报告生成失败')
-        } finally {
-          setBusy(false)
-        }
-      }
-      const items = [
-        ['html', 'HTML', '可视化网页报告'],
-        ['pdf', 'PDF', '适合打印/分享'],
-        ['docx', 'DOCX', 'Word 文档报告'],
-        ['json', 'JSON', '原始账单数据'],
-      ]
-      return h('div', { className: 'tb-report', ref },
-        h('button', {
-          className: 'tb-btn', type: 'button', 'aria-haspopup': 'menu', 'aria-expanded': open,
-          disabled: busy, onClick: () => setOpen(value => !value),
-        }, h(Icon, { name: 'download', size: 13 }), busy ? '生成中…' : '生成报告', h(Icon, { name: 'chevronDown', size: 12 })),
-        open ? h('div', { className: 'tb-report-menu', role: 'menu' },
-          items.map(([format, label, hint]) => h('button', {
-            key: format, type: 'button', className: 'tb-report-item', role: 'menuitem',
-            onClick: () => download(format),
-          }, h(Icon, { name: 'fileText', size: 14 }), h('span', null,
-            h('strong', null, label), h('small', null, hint))))) : null,
-        error ? h('div', { className: 'tb-report-error', role: 'alert' }, error) : null)
-    }
-
-    function PrimaryTabs({ tab, onTab, reload, loading, data, sessionId }) {
-      return h('div', { className: 'tb-primary-head' },
-        h('nav', { className: 'tb-primary-tabs', role: 'tablist', 'aria-label': '账单模块' },
-          [['session', '本轮会话', 'clock'], ['total', '汇总账单', 'receipt'], ['rapport', '协作默契度', 'radar'], ['actions', '动作优化', 'sparkles']].map(([key, label, icon]) =>
-            h('button', {
-              key, type: 'button', role: 'tab', className: 'tb-primary-tab', 'aria-selected': tab === key,
-              onClick: () => onTab(key),
-            }, h(Icon, { name: icon, size: 14 }), label))),
-        h('div', { className: 'tb-primary-tools' },
-          h(ReportButton, { data, sessionId }),
-          h('button', { className: 'tb-btn', type: 'button', onClick: reload, disabled: loading },
-            h(Icon, { name: 'refresh', size: 13 }), loading ? '读取中…' : '刷新')))
+        h('div', { className: 'tb-module-switch' },
+          h(Switch, { items: [['overview', '概览'], ['detail', '明细']], value: view, onChange: setView, accent: VI.teal })),
+        view === 'overview'
+          ? h(React.Fragment, null,
+            h(SessionOverview, { session, data }),
+            h('div', { className: 'tb-card', style: { marginTop: 12 } },
+              h('div', { className: 'tb-card-h' },
+                h('span', { className: 'tb-card-t' }, '费用走势'),
+                h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
+                  h('span', { className: 'tb-card-s' }, `累计 ${money(session.cost, data.symbol)} · 按 ${session.bucketMinutes || 5} 分钟分摊`),
+                  h('button', { className: 'tb-btn', type: 'button', 'aria-expanded': timelineOpen, onClick: () => setTimelineOpen(value => !value) },
+                    h(Icon, { name: timelineOpen ? 'chevronUp' : 'chevronDown', size: 12 }), timelineOpen ? '收起' : '展开'))),
+              h('div', { className: `tb-collapse${timelineOpen ? ' tb-collapse-open' : ''}`, 'aria-hidden': !timelineOpen },
+                h('div', { className: 'tb-collapse-inner' }, h(SessionTimeline, { session, data })))))
+          : h(SessionDetail, { session, data }))
     }
 
     function TotalModule({ data, period, onPeriod, domain, onDomain, tool, onTool }) {
+      const [view, setView] = useState('overview')
       return h('div', { className: 'tb-module' },
         h(ModuleBar, { meta: `${data.range.from} 至 ${data.range.to} · 账本保留 ${data.retained.from}–${data.retained.to}`, period, onChange: onPeriod }),
-        h(Summary, { data }),
-        h(TimeSection, { data }),
-        h('div', { className: 'tb-grid2' },
-          h(Models, { data }),
-          h(Domains, { data, active: domain, onSelect: onDomain })),
-        h(Tasks, { data, domain, onDomain, tool, onTool }),
-        h(Tools, { data, active: tool, onSelect: onTool }),
-        h(Relations, { data }),
-        h(Notes, { data }))
+        h('div', { className: 'tb-module-switch' },
+          h(Switch, { items: [['overview', '概览'], ['detail', '明细'], ['relations', '任务关联']], value: view, onChange: setView, accent: VI.navy })),
+        view === 'overview'
+          ? h(Summary, { data })
+          : view === 'detail'
+            ? h(React.Fragment, null,
+              h(TimeSection, { data }),
+              h('div', { className: 'tb-grid2' },
+                h(Models, { data }),
+                h(Domains, { data, active: domain, onSelect: onDomain })),
+              h(Tasks, { data, domain, onDomain, tool, onTool }),
+              h(Tools, { data, active: tool, onSelect: onTool }),
+              h(Notes, { data }))
+            : h(Relations, { data }))
     }
 
     function RapportModule({ data, period, onPeriod }) {
