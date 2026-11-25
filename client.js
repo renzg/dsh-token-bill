@@ -219,6 +219,11 @@ window.__ModuleLoader__.load({
       .tb-costtype-share { font-size: 10.5px; color: ${C.secondary}; text-align: right; font-variant-numeric: tabular-nums; }
       .tb-costtype-bar { grid-column: 2 / -1; height: 4px; border-radius: 99px; background: ${C.layer2}; overflow: hidden; }
       .tb-costtype-bar > i { display: block; height: 100%; border-radius: 99px; }
+      .tb-treemap { width: 100%; }
+      .tb-heatsteps { width: 100%; }
+      .tb-stepgrid { display: flex; flex-wrap: wrap; gap: 3px; max-height: 380px; overflow: auto; padding: 2px; }
+      .tb-stepcell { width: 13px; height: 13px; border: 0; border-radius: 3px; padding: 0; cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
+      .tb-stepcell:hover { transform: scale(1.35); position: relative; z-index: 1; box-shadow: 0 0 0 1px rgba(42,74,120,.35); }
       .tb-costtype-meta { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--tb-line); color: ${C.secondary}; font-size: 11px; }
       @media (max-width: 640px) { .tb-costtypes { flex-direction: column; align-items: flex-start; } .tb-costtype-list { width: 100%; } }
       .tb-session-head { margin-bottom: 12px; }
@@ -1398,8 +1403,80 @@ window.__ModuleLoader__.load({
         h(Tip, { tip }))
     }
 
+    function CostTreemap({ types, data }) {
+      const { tip, show, hide } = useTip()
+      if (!types.length) return h('div', { className: 'tb-empty' }, '没有可画的费用类型。')
+      const width = 900
+      const height = 260
+      const items = [...types].map(type => ({ ...type, value: Math.max(0.0001, type.cost) }))
+      const total = items.reduce((sum, item) => sum + item.value, 0) || 1
+      const rects = []
+      const layout = (list, x, y, w, h, vertical) => {
+        if (!list.length) return
+        if (list.length === 1) { rects.push({ item: list[0], x, y, w, h }); return }
+        const rest = list.slice(1)
+        const restValue = rest.reduce((sum, item) => sum + item.value, 0)
+        const ratio = list[0].value / Math.max(0.0001, list[0].value + restValue)
+        if (vertical) {
+          rects.push({ item: list[0], x, y, w: w * ratio, h })
+          layout(rest, x + w * ratio, y, w * (1 - ratio), h, false)
+        } else {
+          rects.push({ item: list[0], x, y, w, h: h * ratio })
+          layout(rest, x, y + h * ratio, w, h * (1 - ratio), true)
+        }
+      }
+      layout(items.sort((a, b) => b.value - a.value), 0, 0, width, height, true)
+      return h('div', { className: 'tb-treemap' },
+        h('svg', { viewBox: `0 0 ${width} ${height}`, width: '100%', role: 'img', 'aria-label': '费用类型矩形分布', style: { height: 'auto' } },
+          rects.map((rect, index) => {
+            const color = COST_TYPE_COLORS[rect.item.kind] || VI.gray
+            const label = rect.item.label
+            const showLabel = rect.w > 90 && rect.h > 34
+            return h('g', { key: rect.item.kind || index },
+              h('rect', {
+                x: rect.x + 1, y: rect.y + 1, width: Math.max(0, rect.w - 2), height: Math.max(0, rect.h - 2), rx: 6,
+                fill: color, fillOpacity: 0.28 + Math.min(0.55, rect.item.share * 2.2), stroke: 'var(--tb-card)', strokeWidth: 1.5,
+                onMouseMove: event => show(event, label, [`${money(rect.item.cost, data.symbol)} · ${pct(rect.item.share, 1)}`, `${rect.item.calls} 步`]),
+                onMouseLeave: hide,
+                style: { cursor: 'pointer' },
+              }),
+              showLabel ? h('text', { x: rect.x + 12, y: rect.y + 21, fontSize: 10.5, fontWeight: 600, fill: C.primary, style: { pointerEvents: 'none' } }, label) : null,
+              showLabel ? h('text', { x: rect.x + 12, y: rect.y + 36, fontSize: 9.5, fill: C.secondary, style: { pointerEvents: 'none' } }, pct(rect.item.share, 1)) : null)
+          })),
+        h(Tip, { tip }))
+    }
+
+    function StepHeatmap({ session, data }) {
+      const rows = session.costSteps || []
+      const { tip, show, hide } = useTip()
+      if (!rows.length) return h('div', { className: 'tb-empty' }, '没有步骤数据。')
+      const max = Math.max(...rows.map(row => row.cost), 0.0001)
+      return h('div', { className: 'tb-heatsteps' },
+        h('div', { className: 'tb-stepgrid', role: 'list', 'aria-label': '步骤费用热力图' },
+          rows.map(row => {
+            const color = COST_TYPE_COLORS[row.kind] || VI.gray
+            const opacity = 0.3 + 0.7 * (row.cost / max)
+            return h('button', {
+              key: row.index, type: 'button', className: 'tb-stepcell', role: 'listitem',
+              'aria-label': `第 ${row.index + 1} 步 ${row.label} ${money(row.cost, data.symbol)}`,
+              title: `#${row.index + 1} · ${row.label} · ${money(row.cost, data.symbol)}`,
+              style: { background: color, opacity },
+              onMouseMove: event => show(event, `#${row.index + 1} · ${row.label}`, [
+                `${money(row.cost, data.symbol)} · ${row.turn || '—'} 轮 / ${row.step || '—'} 步`,
+                row.tools.length ? row.tools.map(shortTool).join('、') : (row.model || '模型回复'),
+              ]),
+              onMouseLeave: hide,
+            })
+          })),
+        h('div', { className: 'tb-legend', style: { marginTop: 10 } },
+          (session.costTypes || []).map(type => h('span', { key: type.kind },
+            h('i', { style: { background: COST_TYPE_COLORS[type.kind] || VI.gray } }), type.label))),
+        h(Tip, { tip }))
+    }
+
     function SessionBill({ data }) {
       const [timelineOpen, setTimelineOpen] = useState(false)
+      const [costView, setCostView] = useState('share')
       const session = data.session
       if (!session) return h('div', { className: 'tb-empty' }, '本轮会话还没有计费记录。')
       const costTypes = session.costTypes || []
@@ -1426,15 +1503,29 @@ window.__ModuleLoader__.load({
         h('div', { className: 'tb-card', style: { marginTop: 12 } },
           h('div', { className: 'tb-card-h' },
             h('span', { className: 'tb-card-t' }, '费用类型构成'),
-            h('span', { className: 'tb-card-s' }, '按调用日志与工具归类估算')),
+            h('div', { className: 'tb-seg', role: 'group', 'aria-label': '费用构成视图', style: { flexWrap: 'wrap' } },
+              [['share', '归类占比'], ['rect', '矩形分布'], ['tree', '父子归属'], ['heat', '步骤热力图']].map(([key, label]) =>
+                h('button', { key, type: 'button', 'aria-pressed': costView === key, onClick: () => setCostView(key) }, label)))),
           costTypes.length
-            ? h('div', { className: 'tb-costtypes' },
-              h('div', { className: 'tb-costtype-ring' },
-                h(Ring, { parts: ringParts, size: 150, stroke: 18, centerValue: money(total, data.symbol), centerLabel: '总费用' })),
-              h('div', { className: 'tb-costtype-list' }, list))
+            ? (costView === 'share'
+              ? h('div', { className: 'tb-costtypes' },
+                h('div', { className: 'tb-costtype-ring' },
+                  h(Ring, { parts: ringParts, size: 150, stroke: 18, centerValue: money(total, data.symbol), centerLabel: '总费用' })),
+                h('div', { className: 'tb-costtype-list' }, list))
+              : costView === 'rect'
+                ? h(CostTreemap, { types: costTypes, data })
+                : costView === 'tree'
+                  ? h(Sunburst, { root: session.costAttribution || { children: [] }, symbol: data.symbol, ariaLabel: '费用父子归属' })
+                  : h(StepHeatmap, { session, data }))
             : h('div', { className: 'tb-empty' }, '本轮还没有可归类的调用。'),
-          h('div', { className: 'tb-costtype-meta' }, `步骤 ${costMeta.steps} · 调用 ${costMeta.calls} · 单步均值 ${money(costMeta.avgCost, data.symbol)}`),
-          h('div', { className: 'tb-note' }, '归类来自会话调用与工具名；单步费用按 token 用量分摊。')),
+          h('div', { className: 'tb-costtype-meta' }, `步骤 ${costMeta.steps} · 调用 ${costMeta.calls} · 单步均值 ${money(costMeta.avgCost, data.symbol)} · 最高 10 步占比 ${pct(costMeta.top10Share || 0, 1)}`),
+          h('div', { className: 'tb-note' }, costView === 'tree'
+            ? '内圈为费用类别，外圈为工具或模型；费用按步骤分摊。'
+            : costView === 'heat'
+              ? '每格一步，颜色区分类别，深浅表示费用。'
+              : costView === 'rect'
+                ? '矩形面积表示费用占比；颜色区分类别。'
+                : '归类来自会话调用与工具名；单步费用按 token 用量分摊。')),
         h('div', { className: 'tb-card', style: { marginTop: 12 } },
           h('div', { className: 'tb-card-h' },
             h('span', { className: 'tb-card-t' }, '费用走势'),
