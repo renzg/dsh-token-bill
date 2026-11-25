@@ -28,6 +28,8 @@ window.__ModuleLoader__.load({
       { bar: '#B55245', soft: 'rgba(181,82,69,.10)', ink: '#fff' },
       { bar: '#D9A441', soft: 'rgba(217,164,65,.14)', ink: '#3D3B4F' },
       { bar: '#84A5D2', soft: 'rgba(132,165,210,.14)', ink: '#2A4A78' },
+      { bar: '#75878A', soft: 'rgba(117,135,138,.12)', ink: '#fff' },
+      { bar: '#159A99', soft: 'rgba(21,154,153,.12)', ink: '#fff' },
     ]
     const COST_TYPE_COLORS = {
       command: '#84A5D2',
@@ -572,18 +574,18 @@ window.__ModuleLoader__.load({
     function Summary({ data }) {
       const { totals, previous, tasks, hourly } = data
       const topTask = tasks[0]
-      const topTasks = tasks.slice(0, 3)
+      const topTasks = tasks.slice(0, 5)
       const change = delta(totals.cost, previous.cost)
       const base = totals.attributed || totals.cost || 1
-      const top3 = tasks.slice(0, 3).reduce((sum, task) => sum + task.cost, 0)
-      const share = top3 / base
+      const top5 = tasks.slice(0, 5).reduce((sum, task) => sum + task.cost, 0)
+      const share = top5 / base
       const lines = []
-      if (topTask) lines.push(`最贵的一项「${topTask.title}」占 ${pct(topTask.cost / base)}，前三项合计占 ${pct(share)}。`)
+      if (topTask) lines.push(`最贵的一项「${topTask.title}」占 ${pct(topTask.cost / base)}，前五项合计占 ${pct(share)}。`)
       if (hourly.peakShare > 0.2) lines.push(`约 ${pct(hourly.peakShare)} 的花费、${pct(hourly.peakCallShare || 0)} 的调用落在峰时，错峰是最大的一笔可控成本。`)
       if (totals.cacheShare > 0.8) lines.push(`缓存命中 ${pct(totals.cacheShare, 1)}，重复上下文基本都走了低价缓存——这是账单没有更高的主因。`)
       if (!lines.length) lines.push('这段时间还没有可归因的消费。')
       const topBlock = topTasks.length ? h('div', { className: 'tb-top3', style: { gridColumn: '1 / -1' } },
-        h('div', { className: 'tb-card-s' }, '消耗成本 Top 3'),
+        h('div', { className: 'tb-card-s' }, '消耗成本 Top 5'),
         topTasks.map((task, index) => {
           const tone = TOP_COLORS[index]
           return h('div', { key: task.id, className: 'tb-top3-row', style: { borderLeftColor: tone.bar, background: tone.soft } },
@@ -601,6 +603,7 @@ window.__ModuleLoader__.load({
         h(Kpi, { label: '会话数', value: String(totals.sessions), sub: `覆盖 ${data.range.days} 天`, icon: 'cards', iconColor: VI.gray }),
         h('div', { className: 'tb-card', style: { gridColumn: '1 / -1', padding: '13px 15px' } },
           h('div', { className: 'tb-card-s', style: { marginBottom: 4 } }, '一句话结论'), lines.map((line, i) => h('div', { key: i, className: 'tb-hl' }, line))),
+        h('div', { style: { gridColumn: '1 / -1' } }, h(CostComposition, { source: data, data })),
         topBlock)
     }
 
@@ -1530,11 +1533,11 @@ window.__ModuleLoader__.load({
         h('div', { className: 'tb-note' }, '步骤费用按该次调用的 token 用量分摊；工具与模型来自会话日志。'))
     }
 
-    function CostComposition({ session, data }) {
+    function CostComposition({ source, data }) {
       const [costView, setCostView] = useState('share')
-      const costTypes = session.costTypes || []
-      const costMeta = session.costTypeMeta || { steps: session.calls || 0, calls: session.calls || 0, avgCost: session.costPerTurn || 0 }
-      const total = costTypes.reduce((sum, type) => sum + type.cost, 0) || session.cost || 0
+      const costTypes = source.costTypes || []
+      const costMeta = source.costTypeMeta || { steps: source.calls || 0, calls: source.calls || 0, avgCost: source.costPerTurn || 0 }
+      const total = costTypes.reduce((sum, type) => sum + type.cost, 0) || source.cost || source.totals?.cost || 0
       const ringParts = costTypes.map(type => ({ label: type.label, value: type.cost, color: COST_TYPE_COLORS[type.kind] || VI.gray }))
       const list = costTypes.map(type => h('div', { key: type.kind, className: 'tb-costtype-row' },
         h('span', { className: 'tb-costtype-dot', style: { background: COST_TYPE_COLORS[type.kind] || VI.gray } }),
@@ -1557,8 +1560,8 @@ window.__ModuleLoader__.load({
             : costView === 'rect'
               ? h(CostTreemap, { types: costTypes, data })
               : costView === 'tree'
-                ? h(Sunburst, { root: session.costAttribution || { children: [] }, symbol: data.symbol, ariaLabel: '费用父子归属' })
-                : h(StepHeatmap, { session, data }))
+                ? h(Sunburst, { root: source.costAttribution || { children: [] }, symbol: data.symbol, ariaLabel: '费用父子归属' })
+                : h(StepHeatmap, { source, data }))
           : h('div', { className: 'tb-empty' }, '本轮还没有可归类的调用。'),
         h('div', { className: 'tb-costtype-meta' }, `步骤 ${costMeta.steps} · 调用 ${costMeta.calls} · 单步均值 ${money(costMeta.avgCost, data.symbol)} · 最高 10 步占比 ${pct(costMeta.top10Share || 0, 1)}`),
         h('div', { className: 'tb-note' }, costView === 'tree'
@@ -1578,7 +1581,7 @@ window.__ModuleLoader__.load({
           h(Kpi, { label: '调用', value: String(session.calls || 0), sub: `轮次 ${session.turns || '—'}`, icon: 'activity', iconColor: VI.teal }),
           h(Kpi, { label: '单轮费用', value: money(session.costPerTurn || 0, data.symbol), sub: `首响 ${(session.medianLatencySec || 0).toFixed(1)}s`, icon: 'clock', iconColor: '#D9A441' }),
           h(Kpi, { label: '工具', value: String(session.tools || 0), sub: `错误 ${pct(session.toolErrorRate || 0, 1)}`, icon: 'wrench', iconColor: VI.jade })),
-        h(CostComposition, { session, data }))
+        h(CostComposition, { source: session, data }))
     }
 
     function CostTreemap({ types, data }) {
@@ -1624,8 +1627,8 @@ window.__ModuleLoader__.load({
         h(Tip, { tip }))
     }
 
-    function StepHeatmap({ session, data }) {
-      const rows = session.costSteps || []
+    function StepHeatmap({ source, data }) {
+      const rows = source.costSteps || []
       const { tip, show, hide } = useTip()
       if (!rows.length) return h('div', { className: 'tb-empty' }, '没有步骤数据。')
       const max = Math.max(...rows.map(row => row.cost), 0.0001)
@@ -1647,7 +1650,7 @@ window.__ModuleLoader__.load({
             })
           })),
         h('div', { className: 'tb-legend', style: { marginTop: 10 } },
-          (session.costTypes || []).map(type => h('span', { key: type.kind },
+          (source.costTypes || []).map(type => h('span', { key: type.kind },
             h('i', { style: { background: COST_TYPE_COLORS[type.kind] || VI.gray } }), type.label))),
         h(Tip, { tip }))
     }
