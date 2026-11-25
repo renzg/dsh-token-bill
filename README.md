@@ -9,10 +9,10 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) bund
 ## Install
 
 ```sh
-dsh plugin --profile desktop add github:renzg/dsh-token-bill
+dsh plugin --profile desktop add @zhiyu.pub/dsh-token-bill
 ```
 
-Use `--profile web` for a web profile. The scoped npm name is `@zhiyu.pub/dsh-token-bill`; install from this GitHub source until that package is published. The bundle reads the local `dsh-cost-meter` ledger and session logs only; no API key is needed.
+Use `--profile web` for a web profile. Install from source instead with `dsh plugin --profile desktop add github:renzg/dsh-token-bill`. The bundle reads the local `dsh-cost-meter` ledger and session logs only; no API key is needed.
 
 ## Demo
 
