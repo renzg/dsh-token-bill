@@ -2,6 +2,9 @@ import { buildReport, invalidateReport } from './lib/report.js'
 import { exportReport } from './lib/export.js'
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/
+const GITHUB_REPO = 'https://github.com/renzg/dsh-token-bill'
+const GITHUB_API = 'https://api.github.com/repos/renzg/dsh-token-bill'
+let githubCache = { stars: null, at: 0 }
 
 function send(res, status, body) {
   res.statusCode = status
@@ -94,4 +97,39 @@ export function apply(ctx) {
       }
     },
   }), 'token-bill: /token-bill/report/export')
+
+  ctx.effect(() => ctx.webServer.register({
+    kind: 'exact',
+    path: '/token-bill/github',
+    handler: async (req, res) => {
+      try {
+        if (req.method !== 'GET') return send(res, 405, { error: '只支持 GET' })
+        const allowed = origin()
+        const requestOrigin = req.headers.origin
+        if (allowed && requestOrigin && requestOrigin !== allowed) return send(res, 403, { error: '只接受本机同源请求' })
+        const site = req.headers['sec-fetch-site']
+        if (site && site !== 'same-origin' && site !== 'none') return send(res, 403, { error: '只接受本机同源请求' })
+
+        if (Date.now() - githubCache.at < 10 * 60 * 1000) {
+          return send(res, 200, { stars: githubCache.stars, url: GITHUB_REPO })
+        }
+        const controller = new AbortController()
+        const timer = setTimeout(() => controller.abort(), 8000)
+        try {
+          const response = await fetch(GITHUB_API, {
+            headers: { accept: 'application/vnd.github+json', 'user-agent': 'dsh-token-bill' },
+            signal: controller.signal,
+          })
+          const body = await response.json().catch(() => ({}))
+          const stars = Number(body?.stargazers_count)
+          if (response.ok && Number.isFinite(stars)) githubCache = { stars, at: Date.now() }
+          send(res, 200, { stars: Number.isFinite(stars) ? stars : null, url: GITHUB_REPO })
+        } finally {
+          clearTimeout(timer)
+        }
+      } catch (error) {
+        send(res, 200, { stars: githubCache.stars, url: GITHUB_REPO, error: error?.message || String(error) })
+      }
+    },
+  }), 'token-bill: /token-bill/github')
 }

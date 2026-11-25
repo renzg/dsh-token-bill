@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md) | **日本語** | [한국어](README.ko.md)
 
-バージョン **0.1.8**（2026-11-25）· パッケージ `@zhiyu.pub/dsh-token-bill`。
+バージョン **0.1.9**（2026-11-25）· パッケージ `@zhiyu.pub/dsh-token-bill`。
 
 ローカルのコスト台帳とセッションログを、読める「Token 明細」に変える [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）バンドルです。会話ページに **明細（账单）** ビューを追加します。
 
@@ -15,6 +15,8 @@ dsh plugin --profile desktop add @zhiyu.pub/dsh-token-bill
 web プロファイルでは `desktop` を `web` に。ソースからは `dsh plugin --profile desktop add github:renzg/dsh-token-bill` でもインストールできます。ローカルの `dsh-cost-meter` 台帳とセッションログのみを読み、API キーは不要です。
 
 ## レポート出力
+
+**更新** の後ろに GitHub リポジトリへのリンクがあります。リポジトリの star が 100 を超えると、star 数も表示されます。
 
 **更新** の隣の「レポート生成」から形式を選べます：
 

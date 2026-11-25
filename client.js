@@ -252,6 +252,8 @@ window.__ModuleLoader__.load({
       .tb-primary-tab { display: inline-flex; align-items: center; gap: 6px; border: 1px solid transparent; border-bottom: 0; background: transparent; color: ${C.secondary}; padding: 9px 15px; border-radius: 10px 10px 0 0; font: inherit; font-size: 13px; cursor: pointer; position: relative; top: 1px; transition: background .18s ease, color .18s ease; }
       .tb-primary-tab:hover { background: color-mix(in srgb, ${VI.moon} 10%, transparent); color: ${C.primary}; }
       .tb-primary-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .tb-github { text-decoration: none; }
+      .tb-github-stars { display: inline-flex; align-items: center; gap: 3px; margin-left: 1px; padding-left: 7px; border-left: 1px solid var(--tb-line); color: #B58A2A; font-variant-numeric: tabular-nums; }
       .tb-report { position: relative; }
       .tb-report-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; width: 210px; padding: 5px; background: var(--tb-card); border: 1px solid var(--tb-line); border-radius: 10px; box-shadow: 0 14px 38px rgba(42,74,120,.16); }
       .tb-report-item { display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 9px; border: 0; border-radius: 7px; background: transparent; color: ${C.primary}; font: inherit; text-align: left; cursor: pointer; }
@@ -382,6 +384,7 @@ window.__ModuleLoader__.load({
       activity: ['M3 12h4l2.5-7 5 14 2.5-7h4'],
       download: ['M12 3v12', 'M7 10l5 5 5-5', 'M5 21h14'],
       fileText: ['M6 2h8l4 4v16H6z', 'M14 2v4h4', 'M9 12h6', 'M9 16h6'],
+      star: ['M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6-5.4-2.9-5.4 2.9 1-6L3.2 9.4l6.1-.9L12 3z'],
     }
 
     function Icon({ name, size = 14 }) {
@@ -1741,6 +1744,32 @@ window.__ModuleLoader__.load({
         error ? h('div', { className: 'tb-report-error', role: 'alert' }, error) : null)
     }
 
+    function formatStars(value) {
+      if (value >= 1000) return `${(value / 1000).toFixed(1).replace(/\.0$/, '')}k`
+      return String(value)
+    }
+
+    function GitHubButton() {
+      const [stars, setStars] = useState(null)
+      useEffect(() => {
+        let live = true
+        fetch('/token-bill/github')
+          .then(response => response.ok ? response.json() : null)
+          .then(body => { if (live && Number.isFinite(body?.stars)) setStars(body.stars) })
+          .catch(() => {})
+        return () => { live = false }
+      }, [])
+      const showStars = Number(stars) > 100
+      return h('a', {
+        className: 'tb-btn tb-github', href: 'https://github.com/renzg/dsh-token-bill',
+        target: '_blank', rel: 'noreferrer noopener', 'aria-label': 'GitHub 仓库',
+      },
+        h('svg', { viewBox: '0 0 24 24', width: 14, height: 14, fill: 'currentColor', 'aria-hidden': true, style: { flex: 'none' } },
+          h('path', { d: 'M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2.2c-3.2.7-3.88-1.36-3.88-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.35.78 1.05.78 2.12v3.14c0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z' })),
+        h('span', null, 'GitHub'),
+        showStars ? h('span', { className: 'tb-github-stars' }, h(Icon, { name: 'star', size: 11 }), formatStars(stars)) : null)
+    }
+
     function PrimaryTabs({ tab, onTab, reload, loading, data, sessionId }) {
       return h('div', { className: 'tb-primary-head' },
         h('nav', { className: 'tb-primary-tabs', role: 'tablist', 'aria-label': '账单模块' },
@@ -1752,7 +1781,8 @@ window.__ModuleLoader__.load({
         h('div', { className: 'tb-primary-tools' },
           h(ReportButton, { data, sessionId }),
           h('button', { className: 'tb-btn', type: 'button', onClick: reload, disabled: loading },
-            h(Icon, { name: 'refresh', size: 13 }), loading ? '读取中…' : '刷新')))
+            h(Icon, { name: 'refresh', size: 13 }), loading ? '读取中…' : '刷新'),
+          h(GitHubButton, null)))
     }
 
     function TotalModule({ data, period, onPeriod, domain, onDomain, tool, onTool }) {
