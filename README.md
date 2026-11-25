@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Version **0.1.0** (2026-11-24) · package `dsh-token-bill`.
+Version **0.1.1** (2026-11-25) · package `@zhiyu.pub/dsh-token-bill`.
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) bundle that turns the local cost ledger and session logs into a readable token bill. It adds a **Bill (账单)** view to the conversation page.
 
@@ -36,7 +36,7 @@ Sample data only — not a real ledger or session. Screenshots show the Chinese 
 
 `This session` / `Summary bill` / `Collaboration fit` / `Action tuning`. Collapsed by default with a one-line summary; click a pill or **Expand** to open it, and collapse it again at any time.
 
-- **This session**: current session cost, token composition / top tools (pill switch), turns, and a collapsed cost timeline.
+- **This session**: current session cost, cost-type composition (donut + category breakdown), turns, and a collapsed cost timeline.
 - **Summary bill**: KPIs, a one-line conclusion and the top 3 costliest tasks (red / gold / blue markers).
 - **Collaboration fit**: dual six-axis radar, tags for both sides, fit score, complement / same-frequency judgement and per-axis gaps.
 - **Action tuning**: off-peak, cache, context, model routing, task focus and tool-loop suggestions, each with evidence and a rough saving estimate.

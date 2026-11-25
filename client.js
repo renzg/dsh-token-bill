@@ -29,6 +29,15 @@ window.__ModuleLoader__.load({
       { bar: '#D9A441', soft: 'rgba(217,164,65,.14)', ink: '#3D3B4F' },
       { bar: '#84A5D2', soft: 'rgba(132,165,210,.14)', ink: '#2A4A78' },
     ]
+    const COST_TYPE_COLORS = {
+      command: '#84A5D2',
+      file_edit: '#D9A441',
+      file_read: '#45B8A1',
+      web: '#B55245',
+      multi: '#159A99',
+      other: '#75878A',
+      reply: '#F9D76C',
+    }
 
     const CSS = `
       .tb-root {
@@ -200,6 +209,18 @@ window.__ModuleLoader__.load({
       .tb-top3-cost small { display: block; font-size: 10px; color: ${C.secondary}; font-weight: 400; margin-top: 1px; }
       .tb-rank-badge { position: absolute; top: 10px; right: 12px; width: 20px; height: 20px; border-radius: 99px; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 650; }
       .tb-taskcard { position: relative; }
+      .tb-costtypes { display: flex; align-items: center; gap: 24px; }
+      .tb-costtype-ring { flex: none; }
+      .tb-costtype-list { flex: 1; display: grid; gap: 6px; min-width: 0; }
+      .tb-costtype-row { display: grid; grid-template-columns: 9px minmax(90px, 1fr) 86px 48px; gap: 8px; align-items: center; padding: 2px 0; }
+      .tb-costtype-dot { width: 8px; height: 8px; border-radius: 3px; }
+      .tb-costtype-name { font-size: 12px; }
+      .tb-costtype-cost { font-size: 11.5px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 560; }
+      .tb-costtype-share { font-size: 10.5px; color: ${C.secondary}; text-align: right; font-variant-numeric: tabular-nums; }
+      .tb-costtype-bar { grid-column: 2 / -1; height: 4px; border-radius: 99px; background: ${C.layer2}; overflow: hidden; }
+      .tb-costtype-bar > i { display: block; height: 100%; border-radius: 99px; }
+      .tb-costtype-meta { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--tb-line); color: ${C.secondary}; font-size: 11px; }
+      @media (max-width: 640px) { .tb-costtypes { flex-direction: column; align-items: flex-start; } .tb-costtype-list { width: 100%; } }
       .tb-session-head { margin-bottom: 12px; }
       .tb-session-ring { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
       .tb-top { padding: 16px 18px; background: linear-gradient(140deg, color-mix(in srgb, ${VI.ivory} 26%, var(--tb-card)), var(--tb-card) 64%); }
@@ -1387,27 +1408,19 @@ window.__ModuleLoader__.load({
     }
 
     function SessionBill({ data }) {
-      const [detailTab, setDetailTab] = useState('token')
       const [timelineOpen, setTimelineOpen] = useState(false)
       const session = data.session
       if (!session) return h('div', { className: 'tb-empty' }, '本轮会话还没有计费记录。')
-      const breakdown = session.breakdown || { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, reasoning: 0 }
-      const parts = [
-        { label: '缓存', value: breakdown.cacheRead + breakdown.cacheWrite, color: VI.teal },
-        { label: '输入', value: breakdown.input, color: VI.moon },
-        { label: '输出', value: breakdown.output + breakdown.reasoning, color: VI.yellow },
-      ]
-      const toolMax = Math.max(...(session.topTools || []).map(tool => tool.count), 1)
-      const tokenView = h('div', { className: 'tb-session-ring' },
-        h(Ring, { parts, size: 116, stroke: 12, centerValue: pct(session.cacheShare || 0, 0), centerLabel: '缓存' }),
-        h('div', { className: 'tb-legend', style: { flexDirection: 'column', alignItems: 'flex-start', gap: 4 } },
-          parts.map(part => h('span', { key: part.label }, h('i', { style: { background: part.color } }), `${part.label} ${tokens(part.value)}`))))
-      const toolsView = (session.topTools || []).length
-        ? h('div', null, session.topTools.slice(0, 8).map(tool => h('div', { key: tool.name, className: 'tb-task-tool-row', title: tool.name },
-          h('span', null, shortTool(tool.name)),
-          h('div', { className: 'tb-bar' }, h('i', { style: { width: `${tool.count / toolMax * 100}%`, background: VI.teal } })),
-          h('span', { className: 'tb-num' }, tool.count))))
-        : h('div', { className: 'tb-note' }, '本轮还没有工具调用。')
+      const costTypes = session.costTypes || []
+      const costMeta = session.costTypeMeta || { steps: session.calls || 0, calls: session.calls || 0, avgCost: session.costPerTurn || 0 }
+      const total = costTypes.reduce((sum, type) => sum + type.cost, 0) || session.cost || 0
+      const ringParts = costTypes.map(type => ({ label: type.label, value: type.cost, color: COST_TYPE_COLORS[type.kind] || VI.gray }))
+      const list = costTypes.map(type => h('div', { key: type.kind, className: 'tb-costtype-row' },
+        h('span', { className: 'tb-costtype-dot', style: { background: COST_TYPE_COLORS[type.kind] || VI.gray } }),
+        h('span', { className: 'tb-costtype-name' }, type.label),
+        h('span', { className: 'tb-costtype-cost' }, money(type.cost, data.symbol)),
+        h('span', { className: 'tb-costtype-share' }, pct(type.share, 1)),
+        h('div', { className: 'tb-costtype-bar' }, h('i', { style: { width: `${Math.max(2, type.share * 100)}%`, background: COST_TYPE_COLORS[type.kind] || VI.gray } }))))
       return h('div', { className: 'tb-session' },
         h('div', { className: 'tb-session-head' },
           h('div', null,
@@ -1421,11 +1434,16 @@ window.__ModuleLoader__.load({
           h(Kpi, { label: '工具', value: String(session.tools || 0), sub: `错误 ${pct(session.toolErrorRate || 0, 1)}`, icon: 'wrench', iconColor: VI.jade })),
         h('div', { className: 'tb-card', style: { marginTop: 12 } },
           h('div', { className: 'tb-card-h' },
-            h('span', { className: 'tb-card-t' }, '构成与工具'),
-            h('div', { className: 'tb-seg', role: 'group', 'aria-label': '构成视图' },
-              [['token', 'Token 构成', 'chart'], ['tools', '常用工具', 'wrench']].map(([key, label, icon]) =>
-                h('button', { key, type: 'button', 'aria-pressed': detailTab === key, onClick: () => setDetailTab(key) }, h(Icon, { name: icon, size: 12 }), label)))),
-          h('div', { key: detailTab, className: 'tb-tabpanel' }, detailTab === 'token' ? tokenView : toolsView)),
+            h('span', { className: 'tb-card-t' }, '费用类型构成'),
+            h('span', { className: 'tb-card-s' }, '按调用日志与工具归类估算')),
+          costTypes.length
+            ? h('div', { className: 'tb-costtypes' },
+              h('div', { className: 'tb-costtype-ring' },
+                h(Ring, { parts: ringParts, size: 150, stroke: 18, centerValue: money(total, data.symbol), centerLabel: '总费用' })),
+              h('div', { className: 'tb-costtype-list' }, list))
+            : h('div', { className: 'tb-empty' }, '本轮还没有可归类的调用。'),
+          h('div', { className: 'tb-costtype-meta' }, `步骤 ${costMeta.steps} · 调用 ${costMeta.calls} · 单步均值 ${money(costMeta.avgCost, data.symbol)}`),
+          h('div', { className: 'tb-note' }, '归类来自会话调用与工具名；单步费用按 token 用量分摊。')),
         h('div', { className: 'tb-card', style: { marginTop: 12 } },
           h('div', { className: 'tb-card-h' },
             h('span', { className: 'tb-card-t' }, '费用走势'),
