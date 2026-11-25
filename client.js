@@ -227,9 +227,13 @@ window.__ModuleLoader__.load({
       .tb-costtype-meta { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--tb-line); color: ${C.secondary}; font-size: 11px; }
       @media (max-width: 640px) { .tb-costtypes { flex-direction: column; align-items: flex-start; } .tb-costtype-list { width: 100%; } }
       .tb-session-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-      .tb-switch { display: inline-grid; grid-template-columns: repeat(var(--tb-switch-count), 1fr); position: relative; isolation: isolate; padding: 3px; border: 1px solid var(--tb-line); border-radius: 99px; background: color-mix(in srgb, var(--tb-card) 70%, ${VI.ivory}); }
-      .tb-switch-thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc((100% - 6px) / var(--tb-switch-count)); border-radius: 99px; background: var(--tb-switch-accent); box-shadow: 0 2px 7px color-mix(in srgb, var(--tb-switch-accent) 35%, transparent); transform: translateX(calc(var(--tb-switch-index) * 100%)); transition: transform .26s cubic-bezier(.22,1,.36,1), background .2s ease; z-index: 0; }
-      .tb-switch button { position: relative; z-index: 1; border: 0; border-radius: 99px; background: transparent; color: ${C.secondary}; padding: 5px 14px; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; transition: color .18s ease; }
+      .tb-switch { display: inline-flex; align-items: center; position: relative; isolation: isolate; padding: 3px; border: 1px solid var(--tb-line); border-radius: 99px; background: color-mix(in srgb, var(--tb-card) 70%, ${VI.ivory}); }
+      .tb-switch-thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: 0; border-radius: 99px; background: var(--tb-switch-accent); box-shadow: 0 2px 7px color-mix(in srgb, var(--tb-switch-accent) 35%, transparent); transition: transform .26s cubic-bezier(.22,1,.36,1), width .26s cubic-bezier(.22,1,.36,1), background .2s ease; z-index: 0; }
+      .tb-switch button { position: relative; z-index: 1; flex: 0 0 auto; border: 0; border-radius: 99px; background: transparent; color: ${C.secondary}; padding: 5px 14px; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; transition: color .18s ease; }
+      .tb-filter-chips { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+      .tb-filter-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--tb-line); border-radius: 99px; background: color-mix(in srgb, ${VI.moon} 10%, var(--tb-card)); color: ${C.secondary}; padding: 4px 9px; font: inherit; font-size: 10.5px; cursor: pointer; }
+      .tb-filter-chip:hover { color: ${C.primary}; border-color: color-mix(in srgb, ${VI.navy} 30%, var(--tb-line)); }
+      .tb-filter-x { font-size: 12px; line-height: 1; opacity: .7; }
       .tb-switch button[aria-selected="true"] { color: #fff; font-weight: 600; }
       .tb-module-switch { margin: 2px 0; }
       .tb-detail-line { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(42,74,120,.08); font-size: 11.5px; }
@@ -1438,23 +1442,49 @@ window.__ModuleLoader__.load({
           h('button', { key, type: 'button', 'aria-pressed': period === key, onClick: () => onChange(key) }, label)))
     }
 
-    function ModuleBar({ title, meta, period, onChange, children }) {
+    function ModuleBar({ title, meta, period, onChange, filters, children }) {
       return h('div', { className: 'tb-module-head' },
         h('div', { className: 'tb-module-heading' },
           title ? h('div', { className: 'tb-module-title' }, title) : null,
           meta ? h('div', { className: 'tb-module-meta' }, meta) : null),
         h('div', { className: 'tb-module-controls' },
-          children,
-          period ? h(PeriodBar, { period, onChange }) : null))
+          period ? h(PeriodBar, { period, onChange }) : null,
+          filters?.length ? h('div', { className: 'tb-filter-chips' }, filters.map(filter =>
+            h('button', { key: filter.key, type: 'button', className: 'tb-filter-chip', onClick: filter.clear, title: '清除此过滤条件' },
+              filter.label, h('span', { className: 'tb-filter-x', 'aria-hidden': true }, '×')))) : null,
+          children))
     }
 
     function Switch({ items, value, onChange, accent = VI.teal }) {
-      const index = Math.max(0, items.findIndex(([key]) => key === value))
+      const ref = useRef(null)
+      const [thumb, setThumb] = useState({ left: 0, width: 0 })
+      useEffect(() => {
+        const node = ref.current
+        if (!node) return undefined
+        const update = () => {
+          const active = node.querySelector('[aria-selected="true"]')
+          if (!active) return
+          setThumb({ left: Math.max(0, active.offsetLeft - 3), width: active.offsetWidth })
+        }
+        update()
+        const timer = setTimeout(update, 0)
+        window.addEventListener('resize', update)
+        let observer = null
+        if (typeof ResizeObserver !== 'undefined') {
+          observer = new ResizeObserver(update)
+          observer.observe(node)
+        }
+        return () => {
+          clearTimeout(timer)
+          window.removeEventListener('resize', update)
+          observer?.disconnect()
+        }
+      }, [value, items.length])
       return h('div', {
         className: 'tb-switch', role: 'tablist',
-        style: { '--tb-switch-count': items.length, '--tb-switch-index': index, '--tb-switch-accent': accent },
+        ref, style: { '--tb-switch-accent': accent },
       },
-        h('span', { className: 'tb-switch-thumb', 'aria-hidden': true }),
+        h('span', { className: 'tb-switch-thumb', 'aria-hidden': true, style: { width: thumb.width, transform: `translateX(${thumb.left}px)` } }),
         items.map(([key, label]) => h('button', {
           key, type: 'button', role: 'tab', 'aria-selected': value === key,
           onClick: () => onChange(key),
@@ -1728,12 +1758,19 @@ window.__ModuleLoader__.load({
     function TotalModule({ data, period, onPeriod, domain, onDomain, tool, onTool }) {
       const [view, setView] = useState('overview')
       const title = view === 'overview' ? '概览' : view === 'detail' ? '明细' : '任务关联度'
+      const filters = []
+      if (domain) {
+        const item = (data.domains || []).find(domainItem => domainItem.key === domain)
+        filters.push({ key: 'domain', label: `类型 · ${item?.label || domain}`, clear: () => onDomain('') })
+      }
+      if (tool) filters.push({ key: 'tool', label: `工具 · ${shortTool(tool)}`, clear: () => onTool('') })
       return h('div', { className: 'tb-module' },
         h(ModuleBar, {
           title,
           meta: `${data.range.from} 至 ${data.range.to} · 账本保留 ${data.retained.from}–${data.retained.to}`,
           period,
           onChange: onPeriod,
+          filters,
         }, h(Switch, { items: [['overview', '概览'], ['detail', '明细'], ['relations', '任务关联度']], value: view, onChange: setView, accent: VI.navy })),
         view === 'overview'
           ? h(Summary, { data })

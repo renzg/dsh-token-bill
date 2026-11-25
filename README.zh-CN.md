@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文** | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-版本 **0.1.7**（2026-11-25）· 包名 `@zhiyu.pub/dsh-token-bill`。
+版本 **0.1.8**（2026-11-25）· 包名 `@zhiyu.pub/dsh-token-bill`。
 
 在对话页的视图标签里新增「Token 账单」，把散落在账本与会话日志里的用量整理成一张能读懂的账单。
 
