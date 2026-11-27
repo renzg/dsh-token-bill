@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文** | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-版本 **0.1.10**（2026-11-25）· 包名 `@zhiyu.pub/dsh-token-bill`。
+版本 **0.2.0**（2026-11-25）· 包名 `@zhiyu.pub/dsh-token-bill`。
 
 在对话页的视图标签里新增「Token 账单」，把散落在账本与会话日志里的用量整理成一张能读懂的账单。
 
@@ -26,6 +26,16 @@ web profile 把 `desktop` 换成 `web`。也可以从源码安装：`dsh plugin 
 - **JSON** — 原始账单数据
 
 所有格式都在本机生成，不上传任何数据。
+
+## 额度警示
+
+在「本轮会话 → 概览」里可以给当前会话设置 Token 上限和费用上限，也可以设置全局默认值。额度精确到每一次 `assistant/message` 的 usage（含缓存），费用取自本机 dsh-cost-meter 账本。
+
+- 用量达到额度的 **80%** 时预警一次；跨过上限时再警示一次，同一轮重复渲染不会重复打扰。
+- 警示出现在会话回复结尾（已完成的 Turn 操作栏之前），只提示不阻断。
+- 只统计本会话，不含子代理分支。修改额度会重新开始警示周期。
+- 额度数据保存在本机 `~/.dsh/storages/token-bill-limits.json`，不上传。
+- 仅在 Web GUI 生效；微信/QQ/CLI 会话没有该槽位，收不到警示。停用 cost-meter 时费用额度不可用，Token 额度仍有效。
 
 ## 演示
 

@@ -256,6 +256,7 @@ window.__ModuleLoader__.load({
       .tb-primary-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
       .tb-github { text-decoration: none; }
       .tb-github-stars { display: inline-flex; align-items: center; gap: 3px; margin-left: 1px; padding-left: 7px; border-left: 1px solid var(--tb-line); color: #B58A2A; font-variant-numeric: tabular-nums; }
+      .tb-github-update { display: inline-flex; align-items: center; gap: 2px; margin-left: 1px; padding-left: 7px; border-left: 1px solid var(--tb-line); color: ${VI.teal}; font-weight: 600; font-variant-numeric: tabular-nums; }
       .tb-report { position: relative; }
       .tb-report-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; width: 210px; padding: 5px; background: var(--tb-card); border: 1px solid var(--tb-line); border-radius: 10px; box-shadow: 0 14px 38px rgba(42,74,120,.16); }
       .tb-report-item { display: flex; align-items: center; gap: 9px; width: 100%; padding: 7px 9px; border: 0; border-radius: 7px; background: transparent; color: ${C.primary}; font: inherit; text-align: left; cursor: pointer; }
@@ -321,6 +322,23 @@ window.__ModuleLoader__.load({
       .tb-skel { height: 10px; border-radius: 6px; background: ${C.layer2}; animation: tb-pulse 1.4s ease-in-out infinite; }
       @keyframes tb-pulse { 0%, 100% { opacity: .55 } 50% { opacity: 1 } }
       .tb-note { font-size: 11px; color: ${C.secondary}; }
+      .tb-limit-alerts { display: grid; gap: 6px; margin: 6px 0 2px; }
+      .tb-limit-alert { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 8px 12px; border: 1px solid var(--tb-line); border-left: 3px solid #D9A441; border-radius: 10px; background: color-mix(in srgb, #F9D76C 10%, var(--tb-card)); font-size: 12px; }
+      .tb-limit-alert-crossed { background: color-mix(in srgb, ${C.error} 10%, var(--tb-card)); }
+      .tb-limit-alert-icon { display: inline-flex; color: #B58A2A; }
+      .tb-limit-alert-crossed .tb-limit-alert-icon { color: ${C.error}; }
+      .tb-limit-alert-title { font-weight: 650; }
+      .tb-limit-alert-body { color: ${C.primary}; }
+      .tb-limit-alert-hint { color: ${C.secondary}; font-size: 11px; }
+      .tb-limit-editor { display: grid; gap: 10px; padding: 14px 16px; }
+      .tb-limit-progress { display: grid; gap: 4px; }
+      .tb-limit-progress-head { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: ${C.secondary}; }
+      .tb-limit-track { height: 7px; border-radius: 99px; background: ${C.layer2}; overflow: hidden; }
+      .tb-limit-track > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, ${VI.moon}, ${VI.teal}); }
+      .tb-limit-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .tb-limit-field { display: grid; gap: 4px; font-size: 11px; color: ${C.secondary}; }
+      .tb-limit-field input { width: 100%; padding: 7px 9px; border: 1px solid var(--tb-line); border-radius: 8px; background: var(--tb-card); color: ${C.primary}; font: inherit; font-size: 12px; }
+      @media (max-width: 640px) { .tb-limit-fields { grid-template-columns: 1fr; } }
       .tb-legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; color: ${C.secondary}; }
       .tb-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
       .tb-hl { border-left: 2px solid ${C.brand}; padding: 2px 0 2px 9px; color: ${C.secondary}; font-size: 12px; margin-top: 8px; }
@@ -1286,7 +1304,7 @@ window.__ModuleLoader__.load({
           : data.coverage && data.coverage.parsed === 0 && data.coverage.files > 0
             ? '会话日志解析失败，暂时读不到提问样本。'
             : '所选账期没有用户提问样本。'
-        return h(Card, { title: '协作默契度' }, h('div', { className: 'tb-empty' }, message))
+        return h('section', { className: 'tb-card' }, h('div', { className: 'tb-empty' }, message))
       }
       const arch = style.archetype
       const agent = style.agent || { values: {}, tags: [] }
@@ -1295,10 +1313,7 @@ window.__ModuleLoader__.load({
         ? match.axes
         : style.dims.map(dim => ({ ...dim, label: dim.label, user: dim.value, agent: 0, gap: dim.value }))
 
-      return h(Card, {
-        title: '协作默契度',
-        sub: `样本 ${style.count} 条 · ${style.sessions} 个会话 · AI 侧为行为代理指标`,
-      },
+      return h('section', { className: 'tb-card' },
         match ? h('div', { className: 'tb-match' },
           h('div', { className: 'tb-match-score' }, match.score, h('small', null, '/100')),
           h('div', null,
@@ -1655,7 +1670,128 @@ window.__ModuleLoader__.load({
         h(Tip, { tip }))
     }
 
-    function SessionBill({ data }) {
+    function LimitSettings({ sessionId, data }) {
+      const [open, setOpen] = useState(false)
+      const [info, setInfo] = useState(null)
+      const [draft, setDraft] = useState({ tokenLimit: '', costLimit: '' })
+      const [scope, setScope] = useState('session')
+      const [busy, setBusy] = useState(false)
+      const [message, setMessage] = useState('')
+      useEffect(() => {
+        let live = true
+        fetch(`/token-bill/limits/session?sessionId=${encodeURIComponent(sessionId || '')}&currency=${data.currency || 'CNY'}`)
+          .then(response => response.ok ? response.json() : null)
+          .then(body => {
+            if (!live || !body) return
+            setInfo(body)
+            const limits = scope === 'session' ? body.limits : body.defaultLimits
+            setDraft({
+              tokenLimit: limits?.tokenLimit != null ? String(limits.tokenLimit) : '',
+              costLimit: limits?.costLimit != null ? String(limits.costLimit) : '',
+            })
+          })
+          .catch(() => {})
+        return () => { live = false }
+      }, [sessionId, scope])
+      const switchScope = next => {
+        setScope(next)
+        setMessage('')
+        const limits = next === 'session' ? info?.limits : info?.defaultLimits
+        setDraft({
+          tokenLimit: limits?.tokenLimit != null ? String(limits.tokenLimit) : '',
+          costLimit: limits?.costLimit != null ? String(limits.costLimit) : '',
+        })
+      }
+      const save = async () => {
+        setBusy(true)
+        setMessage('')
+        try {
+          const payload = {
+            tokenLimit: draft.tokenLimit === '' ? null : Number(draft.tokenLimit),
+            costLimit: draft.costLimit === '' ? null : Number(draft.costLimit),
+          }
+          if ((payload.tokenLimit != null && !(payload.tokenLimit > 0)) || (payload.costLimit != null && !(payload.costLimit > 0))) throw new Error('额度需要是大于 0 的数字')
+          const url = scope === 'session'
+            ? `/token-bill/limits/session?sessionId=${encodeURIComponent(sessionId || '')}`
+            : '/token-bill/limits/default'
+          const response = await fetch(url, {
+            method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload),
+          })
+          const body = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(body.error || `HTTP ${response.status}`)
+          setMessage('已保存')
+          const refreshed = await fetch(`/token-bill/limits/session?sessionId=${encodeURIComponent(sessionId || '')}&currency=${data.currency || 'CNY'}`).then(r => r.json()).catch(() => null)
+          if (refreshed) setInfo(refreshed)
+        } catch (error) {
+          setMessage(error?.message || '保存失败')
+        } finally {
+          setBusy(false)
+        }
+      }
+      const clear = async () => {
+        setBusy(true)
+        setMessage('')
+        try {
+          const url = scope === 'session'
+            ? `/token-bill/limits/session?sessionId=${encodeURIComponent(sessionId || '')}`
+            : '/token-bill/limits/default'
+          const response = await fetch(url, {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(scope === 'session' ? { clear: true } : { tokenLimit: null, costLimit: null }),
+          })
+          if (!response.ok) throw new Error('清除失败')
+          setDraft({ tokenLimit: '', costLimit: '' })
+          setMessage('已清除')
+          const refreshed = await fetch(`/token-bill/limits/session?sessionId=${encodeURIComponent(sessionId || '')}&currency=${data.currency || 'CNY'}`).then(r => r.json()).catch(() => null)
+          if (refreshed) setInfo(refreshed)
+        } catch (error) {
+          setMessage(error?.message || '清除失败')
+        } finally {
+          setBusy(false)
+        }
+      }
+      const symbol = data.symbol || '¥'
+      const usage = info?.usage
+      const cost = info?.cost?.value
+      const limits = scope === 'session' ? info?.limits : info?.defaultLimits
+      const progress = (value, limit) => limit > 0 && value != null ? Math.min(100, Math.max(0, (value / limit) * 100)) : 0
+      return h('div', { className: 'tb-card', style: { marginTop: 12 } },
+        h('div', { className: 'tb-card-h' },
+          h('span', { className: 'tb-card-t' }, '额度警示'),
+          h('button', { className: 'tb-btn', type: 'button', 'aria-expanded': open, onClick: () => setOpen(value => !value) },
+            h(Icon, { name: open ? 'chevronUp' : 'chevronDown', size: 12 }), open ? '收起' : '设置')),
+        h('div', { className: `tb-collapse${open ? ' tb-collapse-open' : ''}`, 'aria-hidden': !open },
+          h('div', { className: 'tb-collapse-inner' },
+            h('div', { className: 'tb-limit-editor' },
+              h('div', { className: 'tb-module-meta' }, '达到 80% 时预警一次，跨过上限时再警示一次；只统计本会话。'),
+              h('div', { className: 'tb-seg', role: 'group', 'aria-label': '额度作用域', style: { alignSelf: 'flex-start' } },
+                h('button', { type: 'button', 'aria-pressed': scope === 'session', onClick: () => switchScope('session') }, '本会话'),
+                h('button', { type: 'button', 'aria-pressed': scope === 'default', onClick: () => switchScope('default') }, '全局默认')),
+              limits && (limits.tokenLimit || limits.costLimit)
+                ? h('div', null,
+                  limits.tokenLimit ? h('div', { className: 'tb-limit-progress' },
+                    h('div', { className: 'tb-limit-progress-head' },
+                      h('span', null, 'Token 用量'), h('span', null, `${tokens(usage?.tokens ?? data.session?.tokens ?? 0)} / ${tokens(limits.tokenLimit)}`)),
+                    h('div', { className: 'tb-limit-track' }, h('i', { style: { width: `${progress(usage?.tokens ?? data.session?.tokens, limits.tokenLimit)}%` } }))) : null,
+                  limits.costLimit ? h('div', { className: 'tb-limit-progress' },
+                    h('div', { className: 'tb-limit-progress-head' },
+                      h('span', null, '费用'), h('span', null, `${money(cost ?? data.session?.cost ?? 0, symbol)} / ${money(limits.costLimit, symbol)}`)),
+                    h('div', { className: 'tb-limit-track' }, h('i', { style: { width: `${progress(cost ?? data.session?.cost, limits.costLimit)}%` } }))) : null)
+                : h('div', { className: 'tb-module-meta' }, '尚未设置额度。'),
+              h('div', { className: 'tb-limit-fields' },
+                h('label', { className: 'tb-limit-field' },
+                  h('span', null, 'Token 上限'),
+                  h('input', { type: 'number', min: '1', step: '1', placeholder: '留空表示不设', value: draft.tokenLimit, onChange: event => setDraft(value => ({ ...value, tokenLimit: event.target.value })) })),
+                h('label', { className: 'tb-limit-field' },
+                  h('span', null, `费用上限（${symbol}）`),
+                  h('input', { type: 'number', min: '0.01', step: '0.01', placeholder: '留空表示不设', value: draft.costLimit, onChange: event => setDraft(value => ({ ...value, costLimit: event.target.value })) }))),
+              h('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+                h('button', { className: 'tb-btn', type: 'button', disabled: busy, onClick: save }, busy ? '保存中…' : '保存额度'),
+                h('button', { className: 'tb-btn', type: 'button', disabled: busy, onClick: clear }, '清除'),
+                message ? h('span', { className: 'tb-module-meta', role: 'status' }, message) : null)))))
+    }
+
+    function SessionBill({ data, sessionId }) {
       const [view, setView] = useState('overview')
       const [timelineOpen, setTimelineOpen] = useState(false)
       const session = data.session
@@ -1665,6 +1801,7 @@ window.__ModuleLoader__.load({
           title: view === 'overview' ? '概览' : '明细',
           meta: `${session.title || '当前会话'} · ${session.date || ''} · ${session.domainLabel || ''} · ${session.turns || '—'} 轮 · ${(session.models || []).join('、') || '—'}`,
         }, h(Switch, { items: [['overview', '概览'], ['detail', '明细']], value: view, onChange: setView, accent: VI.teal })),
+        h(LimitSettings, { sessionId, data }),
         view === 'overview'
           ? h(React.Fragment, null,
             h(SessionOverview, { session, data }),
@@ -1691,19 +1828,28 @@ window.__ModuleLoader__.load({
         document.addEventListener('pointerdown', close)
         return () => document.removeEventListener('pointerdown', close)
       }, [open])
+      const reportParams = format => new URLSearchParams({
+        format,
+        from: data.range?.from || '',
+        to: data.range?.to || '',
+        currency: data.currency || 'CNY',
+        sessionId: sessionId || '',
+      })
+      const preview = format => {
+        const anchor = document.createElement('a')
+        anchor.href = `/token-bill/report/preview?${reportParams(format).toString()}`
+        anchor.target = '_blank'
+        anchor.rel = 'noopener'
+        document.body.appendChild(anchor)
+        anchor.click()
+        anchor.remove()
+      }
       const download = async format => {
         setOpen(false)
         setBusy(true)
         setError('')
         try {
-          const params = new URLSearchParams({
-            format,
-            from: data.range?.from || '',
-            to: data.range?.to || '',
-            currency: data.currency || 'CNY',
-            sessionId: sessionId || '',
-          })
-          const response = await fetch(`/token-bill/report/export?${params.toString()}`)
+          const response = await fetch(`/token-bill/report/export?${reportParams(format).toString()}`)
           if (!response.ok) {
             let message = `HTTP ${response.status}`
             try { const body = await response.json(); if (body?.error) message = body.error } catch {}
@@ -1727,9 +1873,15 @@ window.__ModuleLoader__.load({
           setBusy(false)
         }
       }
+      const choose = format => {
+        setOpen(false)
+        setError('')
+        if (format === 'html' || format === 'pdf') { preview(format); return }
+        download(format)
+      }
       const items = [
-        ['html', 'HTML', '可视化网页报告'],
-        ['pdf', 'PDF', '适合打印/分享'],
+        ['html', 'HTML', '浏览器打开，可下载'],
+        ['pdf', 'PDF', '浏览器打开，可下载'],
         ['docx', 'DOCX', 'Word 文档报告'],
         ['json', 'JSON', '原始账单数据'],
       ]
@@ -1741,7 +1893,7 @@ window.__ModuleLoader__.load({
         open ? h('div', { className: 'tb-report-menu', role: 'menu' },
           items.map(([format, label, hint]) => h('button', {
             key: format, type: 'button', className: 'tb-report-item', role: 'menuitem',
-            onClick: () => download(format),
+            onClick: () => choose(format),
           }, h(Icon, { name: 'fileText', size: 14 }), h('span', null,
             h('strong', null, label), h('small', null, hint))))) : null,
         error ? h('div', { className: 'tb-report-error', role: 'alert' }, error) : null)
@@ -1752,25 +1904,50 @@ window.__ModuleLoader__.load({
       return String(value)
     }
 
+    function githubHref(info) {
+      return info && info.hasUpdate
+        ? 'https://github.com/renzg/dsh-token-bill/releases/latest'
+        : 'https://github.com/renzg/dsh-token-bill'
+    }
+
+    function githubBadge(info) {
+      if (!info || !info.hasUpdate || !info.latest) return null
+      const latest = String(info.latest).replace(/^v/i, '')
+      const since = info.current ? `（当前 ${info.current}）` : ''
+      return h('span', { className: 'tb-github-update', title: `有新版本 ${info.latest}${since}，点击查看 Releases` },
+        h(Icon, { name: 'chevronUp', size: 11 }), `新版 ${latest}`)
+    }
+
     function GitHubButton() {
-      const [stars, setStars] = useState(null)
+      const [info, setInfo] = useState(null)
       useEffect(() => {
         let live = true
-        fetch('/token-bill/github')
-          .then(response => response.ok ? response.json() : null)
-          .then(body => { if (live && Number.isFinite(body?.stars)) setStars(body.stars) })
-          .catch(() => {})
-        return () => { live = false }
+        const load = () => {
+          fetch('/token-bill/github', { headers: { accept: 'application/json' } })
+            .then(response => response.ok ? response.json() : null)
+            .then(body => { if (live && body) setInfo(body) })
+            .catch(() => {})
+        }
+        load()
+        const timer = setInterval(load, 10 * 60 * 1000)
+        const onVisible = () => { if (document.visibilityState === 'visible') load() }
+        document.addEventListener('visibilitychange', onVisible)
+        return () => { live = false; clearInterval(timer); document.removeEventListener('visibilitychange', onVisible) }
       }, [])
+      const stars = info && info.stars
       const showStars = Number(stars) > 100
+      const hasUpdate = Boolean(info && info.hasUpdate && info.latest)
       return h('a', {
-        className: 'tb-btn tb-github', href: 'https://github.com/renzg/dsh-token-bill',
-        target: '_blank', rel: 'noreferrer noopener', 'aria-label': 'GitHub 仓库',
+        className: 'tb-btn tb-github', href: githubHref(info),
+        target: '_blank', rel: 'noreferrer noopener',
+        'aria-label': hasUpdate ? `GitHub 仓库，有新版本 ${info.latest}` : 'GitHub 仓库',
+        title: hasUpdate ? `有新版本 ${info.latest}，点击查看 Releases` : 'GitHub 仓库',
       },
         h('svg', { viewBox: '0 0 24 24', width: 14, height: 14, fill: 'currentColor', 'aria-hidden': true, style: { flex: 'none' } },
           h('path', { d: 'M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56v-2.2c-3.2.7-3.88-1.36-3.88-1.36-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.35.78 1.05.78 2.12v3.14c0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z' })),
         h('span', null, 'GitHub'),
-        showStars ? h('span', { className: 'tb-github-stars' }, h(Icon, { name: 'star', size: 11 }), formatStars(stars)) : null)
+        showStars ? h('span', { className: 'tb-github-stars' }, h(Icon, { name: 'star', size: 11 }), formatStars(stars)) : null,
+        githubBadge(info))
     }
 
     function PrimaryTabs({ tab, onTab, reload, loading, data, sessionId }) {
@@ -1820,8 +1997,12 @@ window.__ModuleLoader__.load({
     }
 
     function RapportModule({ data, period, onPeriod }) {
+      const style = data && data.style
+      const meta = style
+        ? `按所选账期计算 · 样本 ${style.count} 条 · ${style.sessions} 个会话 · AI 侧为行为代理指标`
+        : '按所选账期计算'
       return h('div', { className: 'tb-module' },
-        h(ModuleBar, { title: '协作默契度', meta: '按所选账期计算', period, onChange: onPeriod }),
+        h(ModuleBar, { title: '协作默契度', meta, period, onChange: onPeriod }),
         h(StyleSection, { data }))
     }
 
@@ -1829,6 +2010,44 @@ window.__ModuleLoader__.load({
       return h('div', { className: 'tb-module' },
         h(ModuleBar, { title: '动作优化', meta: '按所选账期计算', period, onChange: onPeriod }),
         h(Suggestions, { data }))
+    }
+
+    function LimitTurnTail(props) {
+      const [warnings, setWarnings] = useState([])
+      const sessionId = props?.sessionId || ''
+      const seq = Number.isSafeInteger(props?.seq) ? props.seq
+        : Number.isSafeInteger(props?.turn?.end?.seq) ? props.turn.end.seq : -1
+      useEffect(() => {
+        let live = true
+        setWarnings([])
+        if (!sessionId || seq < 0) return () => { live = false }
+        fetch('/token-bill/limits/alert', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ sessionId, seq }),
+        })
+          .then(response => response.ok ? response.json() : null)
+          .then(body => { if (live && Array.isArray(body?.warnings)) setWarnings(body.warnings) })
+          .catch(() => {})
+        return () => { live = false }
+      }, [sessionId, seq])
+      if (!warnings.length) return null
+      return h('div', { className: 'tb-limit-alerts', role: 'status', 'aria-live': 'polite' },
+        warnings.map((warning, index) => {
+          const crossed = warning.kind === 'crossed'
+          const value = warning.unit === 'cost' ? `¥${Number(warning.value).toFixed(2)}` : tokens(warning.value)
+          const limit = warning.unit === 'cost' ? `¥${Number(warning.limit).toFixed(2)}` : tokens(warning.limit)
+          const label = warning.metric === 'cost' ? '会话费用' : '会话 Token'
+          return h('div', {
+            key: `${warning.metric}-${index}`,
+            className: `tb-limit-alert${crossed ? ' tb-limit-alert-crossed' : ''}`,
+            style: { borderLeftColor: crossed ? C.error : '#D9A441' },
+          },
+            h('span', { className: 'tb-limit-alert-icon' }, h(Icon, { name: crossed ? 'activity' : 'target', size: 13 })),
+            h('span', { className: 'tb-limit-alert-title' }, crossed ? '已达到上限' : '接近上限'),
+            h('span', { className: 'tb-limit-alert-body' }, `${label} 已用 ${value} / 上限 ${limit}（${pct(warning.ratio, 0)}）`),
+            h('span', { className: 'tb-limit-alert-hint' }, crossed ? '本会话已跨过你设置的额度。' : '已用满额度的 80%。'))
+        }))
     }
 
     function TokenBillView(props) {
@@ -1845,7 +2064,7 @@ window.__ModuleLoader__.load({
       if (!data) return h(React.Fragment, null, h('style', null, CSS), h(ErrorCard, { message: '没有收到账单数据。', retry: reload }))
 
       const content = tab === 'session'
-        ? h(SessionBill, { data })
+        ? h(SessionBill, { data, sessionId })
         : tab === 'total'
           ? h(TotalModule, { data, period, onPeriod: changePeriod, domain, onDomain: setDomain, tool: toolFilter, onTool: setToolFilter })
           : tab === 'rapport'
@@ -1870,6 +2089,13 @@ window.__ModuleLoader__.load({
           label: () => '账单',
           inject: sessionId => ({ sessionId }),
         }, TokenBillView))
+        ctx.slots.inject('conversation.chat.turnTail', () => ctx.slots.register({
+          name: 'conversation.chat.turnTail',
+          id: 'token-bill-limit-alert',
+          order: 15,
+          select: state => state,
+          inject: state => ({ sessionId: state?.sessionId, seq: state?.seq, turn: state?.turn }),
+        }, LimitTurnTail))
       },
     }
   },

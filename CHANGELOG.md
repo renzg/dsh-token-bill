@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0 — 2026-11-27
+
+- 新增「额度警示」：可按会话或全局设置 Token 上限与费用上限。
+- Token 用量按 assistant/message.usage 精确累加（含缓存）；费用取自本机 dsh-cost-meter 账本。
+- 达到 80% 预警一次、跨线警示一次；警示通过 conversation.chat.turnTail 显示在回复结尾，只提示不阻断。
+- 只统计本会话，不含子代理；额度存于本机 token-bill-limits.json。
+
 ## 0.1.10 — 2026-11-25
 
 - 汇总账单概览插入「费用类型构成」，位置在一句话结论下、消耗成本前；数据按全账期聚合。

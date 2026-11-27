@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | **한국어**
 
-버전 **0.1.10** (2026-11-25) · 패키지 `@zhiyu.pub/dsh-token-bill`.
+버전 **0.2.0** (2026-11-25) · 패키지 `@zhiyu.pub/dsh-token-bill`.
 
 로컬 비용 원장과 세션 로그를 읽기 쉬운 **Token 명세**로 바꾸는 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)(DSH) 번들입니다. 대화 페이지에 **명세(账单)** 뷰를 추가합니다.
 
@@ -26,6 +26,16 @@ dsh plugin --profile desktop add @zhiyu.pub/dsh-token-bill
 - **JSON** — 원본 보고서 데이터
 
 모든 형식은 로컬에서 생성되며 외부로 전송되지 않습니다.
+
+## 사용 한도 경고
+
+**이번 세션 → 개요**에서 현재 세션의 Token 상한과 비용 상한을 설정할 수 있습니다. 전역 기본값도 설정 가능합니다. Token은 모든 `assistant/message` usage를 정확히 합산하며(캐시 포함), 비용은 로컬 dsh-cost-meter 원장에서 가져옵니다.
+
+- 상한의 **80%**에서 한 번 경고하고, 초과 시 한 번 더 경고합니다. 같은 턴의 재렌더링에서는 반복하지 않습니다.
+- 경고는 완료된 턴의 액션 행 앞에 표시됩니다. 경고만 하며 작업을 중단하지 않습니다.
+- 오직 현재 세션만 집계하며 하위 에이전트는 제외합니다. 한도를 바꾸면 경고 주기가 초기화됩니다.
+- 한도는 `~/.dsh/storages/token-bill-limits.json`에 로컬 저장되며 외부 전송되지 않습니다.
+- Web GUI에서만 동작합니다. 위챗/QQ/CLI 세션에는 해당 슬롯이 없어 경고를 받을 수 없습니다. cost-meter가 꺼져 있으면 비용 한도를 쓸 수 없고 Token 한도만 동작합니다.
 
 ## 데모
 

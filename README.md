@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md) | [日本語](README.ja.md) | [한국어](README.ko.md)
 
-Version **0.1.10** (2026-11-25) · package `@zhiyu.pub/dsh-token-bill`.
+Version **0.2.0** (2026-11-25) · package `@zhiyu.pub/dsh-token-bill`.
 
 A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH) bundle that turns the local cost ledger and session logs into a readable token bill. It adds a **Bill (账单)** view to the conversation page.
 
@@ -26,6 +26,16 @@ Next to **Refresh**, **Generate report** opens a format menu:
 - **JSON** — the raw report data
 
 All formats are generated locally from the current ledger and session logs; nothing is uploaded.
+
+## Spending limits
+
+In **This session → Overview** you can set a token limit and a cost limit for the current session, or configure global defaults. Token usage is counted precisely from every `assistant/message` usage record (cache included); cost comes from the local dsh-cost-meter ledger.
+
+- A warning appears once at **80%** of a limit, and again when the limit is crossed; re-renders of the same turn stay quiet.
+- Warnings render at the end of a completed turn, before its action row. They warn only; they never block the run.
+- Only the current session counts; child subagent sessions are excluded. Changing a limit restarts the alert cycle.
+- Limits are stored locally in `~/.dsh/storages/token-bill-limits.json`; nothing is uploaded.
+- Web GUI only: WeChat / QQ / CLI chats have no such slot. Without cost-meter, cost limits are unavailable while token limits still work.
 
 ## Demo
 
